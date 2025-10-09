@@ -1,51 +1,1051 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Live Stream</title>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+<meta content="yes" name="mobile-web-app-capable"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+<meta content="#000000" name="theme-color"/>
+<title>LIVE TV</title>
+<!-- players -->
+<script src="https://telegram.org/js/telegram-web-app.js">
+// --- Modernized enhancements ---
+
+// Show/hide back button on interaction or pause
+const videoEl = document.getElementById('video');
+
+function showBackButton() {
+  if (document.getElementById('playerContainer').style.display !== 'none') {
+    backBtn.classList.add('visible');
+    clearTimeout(hideControlsTimeout);
+    hideControlsTimeout = setTimeout(() => backBtn.classList.remove('visible'), 3000);
+  }
+}
+
+videoEl.addEventListener('pause', showBackButton);
+document.addEventListener('mousemove', showBackButton);
+document.addEventListener('touchstart', showBackButton);
+
+// Update back button logic to properly reset GUI & player
+backBtn.addEventListener('click', () => {
+  try {
+    if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
+    if (player) { player.destroy(); player = null; }
+    videoEl.pause();
+    videoEl.removeAttribute('src');
+    videoEl.load();
+  } catch (e) { console.warn('cleanup error', e); }
+
+  document.getElementById('playerContainer').style.display = 'none';
+  document.getElementById('guiWrap').style.display = 'flex';
+  document.getElementById('playBtn').style.display = 'flex';
+  backBtn.classList.remove('visible');
+});
+
+// Responsive design improvements
+window.addEventListener('resize', () => {
+  const gui = document.querySelector('.gui');
+  if (window.innerWidth > 768) {
+    gui.style.maxWidth = '520px';
+    gui.style.width = '100%';
+    gui.style.margin = 'auto';
+  } else {
+    gui.style.width = '94%';
+    gui.style.maxWidth = 'none';
+  }
+});
+
+// Add some smooth fade effects for GUI/player transitions
+document.getElementById('playerContainer').style.transition = 'opacity 0.4s ease';
+document.getElementById('guiWrap').style.transition = 'opacity 0.4s ease';
+
+// Improve back button appearance
+const style = document.createElement('style');
+style.innerHTML = `
+  .back-btn {
+    transition: opacity 0.4s ease, transform 0.3s ease;
+  }
+  .back-btn:hover {
+    transform: scale(1.08);
+    background: rgba(30, 144, 255, 0.6);
+  }
+  .player-container {
+    animation: fadeIn 0.4s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+`;
+document.head.appendChild(style);
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.0/shaka-player.compiled.min.js">
+// --- Modernized enhancements ---
+
+// Show/hide back button on interaction or pause
+const videoEl = document.getElementById('video');
+
+function showBackButton() {
+  if (document.getElementById('playerContainer').style.display !== 'none') {
+    backBtn.classList.add('visible');
+    clearTimeout(hideControlsTimeout);
+    hideControlsTimeout = setTimeout(() => backBtn.classList.remove('visible'), 3000);
+  }
+}
+
+videoEl.addEventListener('pause', showBackButton);
+document.addEventListener('mousemove', showBackButton);
+document.addEventListener('touchstart', showBackButton);
+
+// Update back button logic to properly reset GUI & player
+backBtn.addEventListener('click', () => {
+  try {
+    if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
+    if (player) { player.destroy(); player = null; }
+    videoEl.pause();
+    videoEl.removeAttribute('src');
+    videoEl.load();
+  } catch (e) { console.warn('cleanup error', e); }
+
+  document.getElementById('playerContainer').style.display = 'none';
+  document.getElementById('guiWrap').style.display = 'flex';
+  document.getElementById('playBtn').style.display = 'flex';
+  backBtn.classList.remove('visible');
+});
+
+// Responsive design improvements
+window.addEventListener('resize', () => {
+  const gui = document.querySelector('.gui');
+  if (window.innerWidth > 768) {
+    gui.style.maxWidth = '520px';
+    gui.style.width = '100%';
+    gui.style.margin = 'auto';
+  } else {
+    gui.style.width = '94%';
+    gui.style.maxWidth = 'none';
+  }
+});
+
+// Add some smooth fade effects for GUI/player transitions
+document.getElementById('playerContainer').style.transition = 'opacity 0.4s ease';
+document.getElementById('guiWrap').style.transition = 'opacity 0.4s ease';
+
+// Improve back button appearance
+const style = document.createElement('style');
+style.innerHTML = `
+  .back-btn {
+    transition: opacity 0.4s ease, transform 0.3s ease;
+  }
+  .back-btn:hover {
+    transform: scale(1.08);
+    background: rgba(30, 144, 255, 0.6);
+  }
+  .player-container {
+    animation: fadeIn 0.4s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+`;
+document.head.appendChild(style);
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js">
+// --- Modernized enhancements ---
+
+// Show/hide back button on interaction or pause
+const videoEl = document.getElementById('video');
+
+function showBackButton() {
+  if (document.getElementById('playerContainer').style.display !== 'none') {
+    backBtn.classList.add('visible');
+    clearTimeout(hideControlsTimeout);
+    hideControlsTimeout = setTimeout(() => backBtn.classList.remove('visible'), 3000);
+  }
+}
+
+videoEl.addEventListener('pause', showBackButton);
+document.addEventListener('mousemove', showBackButton);
+document.addEventListener('touchstart', showBackButton);
+
+// Update back button logic to properly reset GUI & player
+backBtn.addEventListener('click', () => {
+  try {
+    if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
+    if (player) { player.destroy(); player = null; }
+    videoEl.pause();
+    videoEl.removeAttribute('src');
+    videoEl.load();
+  } catch (e) { console.warn('cleanup error', e); }
+
+  document.getElementById('playerContainer').style.display = 'none';
+  document.getElementById('guiWrap').style.display = 'flex';
+  document.getElementById('playBtn').style.display = 'flex';
+  backBtn.classList.remove('visible');
+});
+
+// Responsive design improvements
+window.addEventListener('resize', () => {
+  const gui = document.querySelector('.gui');
+  if (window.innerWidth > 768) {
+    gui.style.maxWidth = '520px';
+    gui.style.width = '100%';
+    gui.style.margin = 'auto';
+  } else {
+    gui.style.width = '94%';
+    gui.style.maxWidth = 'none';
+  }
+});
+
+// Add some smooth fade effects for GUI/player transitions
+document.getElementById('playerContainer').style.transition = 'opacity 0.4s ease';
+document.getElementById('guiWrap').style.transition = 'opacity 0.4s ease';
+
+// Improve back button appearance
+const style = document.createElement('style');
+style.innerHTML = `
+  .back-btn {
+    transition: opacity 0.4s ease, transform 0.3s ease;
+  }
+  .back-btn:hover {
+    transform: scale(1.08);
+    background: rgba(30, 144, 255, 0.6);
+  }
+  .player-container {
+    animation: fadeIn 0.4s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+`;
+document.head.appendChild(style);
+</script>
+
+<style>
+    /* --- Base --- */
+    * { box-sizing: border-box; margin:0; padding:0; -webkit-tap-highlight-color: transparent; }
+    html,body { height:100%; }
     body {
-      margin: 0;
-      padding: 0;
-      background: #000;
+      background: #050506;
       color: #fff;
-      font-family: Arial, sans-serif;
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      overflow: hidden;
+      min-height: 100vh;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    /* --- GUI container (initial) --- */
+    .gui-wrap {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 28px;
+      z-index: 80;
+    }
+
+    .gui {
+      width: 100%;
+      max-width: 520px;
       display: flex;
       flex-direction: column;
-      height: 100vh;
+      gap: 14px;
+      padding: 18px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid rgba(255,255,255,0.04);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
     }
-    header {
-      background: #1a1a1a;
-      padding: 15px;
-      text-align: center;
-      font-size: 1.5rem;
-      font-weight: bold;
+
+    .gui h2 {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      color: #e6eefc;
+      margin-bottom: 4px;
     }
-    iframe {
-      flex: 1;
+
+    .input {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.06);
+      padding: 16px;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 16px;
+      outline: none;
+      transition: border-color .15s ease, box-shadow .15s ease;
+      width: 100%;
+    }
+
+    .input::placeholder { color: rgba(255,255,255,0.45); font-size: 15px; }
+    .input:focus { border-color: #2ea3ff; box-shadow: 0 6px 20px rgba(46,163,255,0.08); }
+
+    .two-col {
+      display:flex; gap:10px;
+    }
+
+    .label-row {
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      color: rgba(255,255,255,0.7); font-size: 13px;
+    }
+
+    /* subtle field caption */
+    .small { font-size: 13px; color: rgba(255,255,255,0.55); margin-top: 6px; }
+
+    /* play button floating */
+    .play-fab {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1e90ff, #2ea3ff);
+      display:flex; align-items:center; justify-content:center;
+      box-shadow: 0 10px 30px rgba(46,163,255,0.18), inset 0 -4px 18px rgba(0,0,0,0.2);
+      z-index: 200;
+      cursor: pointer;
       border: none;
+      outline: none;
+    }
+
+    .play-fab:active { transform: translateY(2px); }
+    .play-triangle {
+      width: 0; height: 0;
+      border-left: 16px solid #fff;
+      border-top: 10px solid transparent;
+      border-bottom: 10px solid transparent;
+      margin-left: 4px;
+    }
+
+    /* --- Player area (hidden initially) --- */
+    .player-container {
+      position: absolute;
+      inset: 0;
+      background: #000;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index: 20;
+    }
+
+    video {
       width: 100%;
       height: 100%;
+      object-fit: contain;
+      background: #000;
     }
-    footer {
-      background: #1a1a1a;
-      text-align: center;
-      padding: 10px;
-      font-size: 0.9rem;
+
+    /* Header (top) */
+    .header {
+      position: absolute;
+      top: 0;
+      left: 0; right: 0;
+      padding: 12px 16px;
+      z-index: 40;
+      display:flex; justify-content:center; align-items:center;
+      background: linear-gradient(180deg, rgba(0,0,0,0.66), rgba(0,0,0,0));
+      pointer-events:none;
     }
-  </style>
+    .channel-name { pointer-events:auto; font-weight:600; color:#fff; text-transform:uppercase; letter-spacing:0.6px; }
+
+    /* --- Loading overlay (modern minimal) --- */
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items:center;
+      justify-content:center;
+      z-index: 60;
+      overflow: hidden;
+    }
+
+    .loading-bg {
+      position:absolute; inset:0;
+      background: linear-gradient(120deg, rgba(5,6,7,0.9), rgba(10,11,12,0.95));
+      mix-blend-mode: normal;
+      filter: blur(0.3px);
+      opacity: 1;
+    }
+
+    .loader-card {
+      z-index: 70;
+      width: min(720px, 92%);
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.012));
+      border: 1px solid rgba(255,255,255,0.04);
+      border-radius: 14px;
+      padding: 20px;
+      display:flex;
+      gap:18px;
+      align-items:center;
+      box-shadow: 0 12px 45px rgba(0,0,0,0.6);
+    }
+
+    .loader-visual {
+      width:86px; height:86px; border-radius: 14px;
+      display:flex; align-items:center; justify-content:center;
+      background: linear-gradient(135deg, rgba(46,163,255,0.12), rgba(46,163,255,0.04));
+      position:relative;
+      overflow:hidden;
+    }
+
+    /* subtle animated ring */
+    .ring {
+      width:56px; height:56px; border-radius:50%;
+      border: 3px solid rgba(255,255,255,0.06);
+      border-top-color: rgba(46,163,255,0.9);
+      animation: spin 1.2s linear infinite;
+    }
+
+    @keyframes spin { from { transform: rotate(0);} to { transform: rotate(360deg);} }
+
+    .loader-texts {
+      flex:1; color:#e6eefc;
+    }
+
+    .step {
+      font-size:15px;
+      color: rgba(230,238,252,0.95);
+      margin-bottom: 6px;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: all 360ms cubic-bezier(.2,.9,.2,1);
+    }
+
+    .step.visible { opacity: 1; transform: translateY(0); }
+
+    .substep { font-size:13px; color:rgba(230,238,252,0.65); }
+
+    /* small footer note */
+    .loader-footer { font-size:12px; color: rgba(230,238,252,0.55); margin-top:8px; }
+
+    /* error box reused */
+    .error-message { position: absolute; top: 50%; left:50%; transform:translate(-50%,-50%); background: rgba(244, 67, 54, 0.95); color:#fff; padding:18px; border-radius:12px; z-index:150; max-width:340px; text-align:center; box-shadow: 0 10px 30px rgba(244,67,54,0.24); }
+
+    /* mobile tweaks */
+    @media (max-width:480px) {
+      .gui { padding:14px; gap:12px; }
+      .input { padding:14px; font-size:15px; }
+      .play-fab { width:64px; height:64px; }
+    }
+  
+  .back-btn {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    z-index: 100;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(255,255,255,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .back-btn svg { width:20px; height:20px; stroke:#fff; }
+  .back-btn.visible { opacity: 1; }
+
+  .input-wrap {
+    position: relative;
+  }
+  .clear-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    display:flex; align-items:center; justify-content:center;
+    cursor: pointer;
+  }
+  .clear-btn:before {
+    content: '×';
+    color: #fff;
+    font-size: 14px;
+    line-height: 1;
+  }
+    </style>
+
+<style>
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Toggle switch styling */
+.switch-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 60px;
+  height: 30px;
+  background: #1e90ff;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  z-index: 9999;
+}
+.switch-circle {
+  width: 22px;
+  height: 22px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.3s ease;
+}
+.switch-toggle.active {
+  background: #e50914;
+}
+.switch-toggle.active .switch-circle {
+  transform: translateX(30px);
+}
+</style>
+
+
+<style>
+.switch-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 60px;
+  height: 30px;
+  background: #1e90ff;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  z-index: 999999; /* ensure visibility over all elements */
+}
+.switch-circle {
+  width: 22px;
+  height: 22px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.3s ease;
+}
+.switch-toggle.active {
+  background: #e50914;
+}
+.switch-toggle.active .switch-circle {
+  transform: translateX(30px);
+}
+</style>
+
 </head>
 <body>
-  <header>
-    📺 Live Stream
-  </header>
+<!-- GUI (shown first) -->
+<div class="gui-wrap" id="guiWrap">
+<div aria-label="stream form" class="gui" role="form">
+<h2>Media Stream URL</h2>
+<div class="input-wrap"><input autocomplete="off" class="input" id="mediaUrl" placeholder="Media Stream URL (e.g. https://.../index.m3u8 or .mpd)" type="url"/><div class="clear-btn" data-target="mediaUrl"></div></div>
+<h2>Cookie Value</h2>
+<div class="input-wrap"><input autocomplete="off" class="input" id="cookieVal" placeholder="Cookie header (e.g. cookieName=value; ...)" type="text"/><div class="clear-btn" data-target="cookieVal"></div></div>
+<h2>Referer Value</h2>
+<div class="input-wrap"><input autocomplete="off" class="input" id="refererVal" placeholder="Referer (optional)" type="text"/><div class="clear-btn" data-target="refererVal"></div></div>
+<h2>Origin Value</h2>
+<div class="input-wrap"><input autocomplete="off" class="input" id="originVal" placeholder="Origin (optional)" type="text"/><div class="clear-btn" data-target="originVal"></div></div>
+<h2>DRM License URL</h2>
+<div class="input-wrap"><input autocomplete="off" class="input" id="licenseUrl" placeholder="DRM license URL (optional)" type="url"/><div class="clear-btn" data-target="licenseUrl"></div></div>
+<div class="two-col">
+<div style="flex:1;">
+<h2>Clear Key ID</h2>
+<div class="input-wrap"><input autocomplete="off" class="input" id="clearKid" placeholder="ENTER KID (hex/base64?)" type="text"/><div class="clear-btn" data-target="clearKid"></div></div>
+</div>
+<div style="flex:1;">
+<h2>Clear Key Key</h2>
+<div class="input-wrap"><input autocomplete="off" class="input" id="clearKey" placeholder="ENTER KEY" type="text"/><div class="clear-btn" data-target="clearKey"></div></div>
+</div>
+</div>
+<div class="small">Paste the values above and press the play button at bottom-right. The player will start after an interactive loader.</div>
+</div>
+</div>
+<!-- Player container (hidden until play) -->
+<div class="player-container" id="playerContainer" style="display:none;">
+<button class="back-btn" id="backBtn">
+<svg fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
 
-  <!-- Embedded stream -->
-  <iframe src="https://stream.crichd.vip/update/star1hi.php" allowfullscreen></iframe>
+<div class="header" id="header"><div class="channel-name">LIVE TV</div></div>
+<video controls="" id="video" playsinline="" webkit-playsinline=""></video>
+</div>
+<!-- Modern minimal loading overlay -->
+<div aria-hidden="true" class="loading-overlay" id="loadingOverlay">
+<div class="loading-bg"></div>
+<div aria-live="polite" class="loader-card" role="status">
+<div class="loader-visual">
+<div class="ring"></div>
+</div>
+<div class="loader-texts">
+<div class="step" id="step1">Preparing your stream...</div>
+<div class="step" id="step2">Initializing DRM (if present)...</div>
+<div class="step" id="step3">Fetching video chunks...</div>
+<div class="step" id="step4">Almost there 🚀</div>
+<div class="substep" id="loaderSub" style="margin-top:8px;">This may take a few seconds on mobile.</div>
+<div class="loader-footer">Tip: If loading gets stuck, try opening in external browser.</div>
+</div>
+</div>
+</div>
+<!-- Floating Play button -->
+<button class="play-fab" id="playBtn" title="Play">
+<div class="play-triangle"></div>
+</button>
+<script>
+    /***** Player-vars (will be updated from GUI) *****/
+    let channelData = {
+      name: "live tv",
+      logo: "ENTER PNG LINK",
+      manifest_uri: "ENTER MANIFEST URL",   // updated from GUI
+      group: "Entertainment",
+      clear_key_id: "ENTER KID",           // updated from GUI
+      clear_key_key: "ENTER KEY",          // updated from GUI
+      user_agent: "plaYtv/7.1.3 (Linux;Android 13) ygx/69.1 ExoPlayerLib/824.0",
+      cookie: { cookie: "ENTER COOKIE" },
+      key: "LIVE TV"
+    };
+    let streamUrl = 'ENTER STREAMING URL';
 
-  <footer>
-    © 2025 My Stream Website
-  </footer>
+    const tg = window.Telegram?.WebApp;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+    let player = null;
+    let hlsPlayer = null;
+    let loadingTimeout = null;
+    let hideControlsTimeout = null;
+
+    // Utility: show/hide loading overlay
+    function showLoadingOverlay(show) {
+      const overlay = document.getElementById('loadingOverlay');
+      if (!overlay) return;
+      overlay.style.display = show ? 'flex' : 'none';
+      overlay.setAttribute('aria-hidden', show ? 'false' : 'true');
+    }
+
+    function showError(message, title='Playback Error') {
+      showLoadingOverlay(false);
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'error-message';
+      errorDiv.innerHTML = '<div style="font-weight:700;margin-bottom:6px;">'+title+'</div><div>'+message+'</div>';
+      document.body.appendChild(errorDiv);
+      setTimeout(()=>{ errorDiv.remove(); },8000);
+    }
+
+    function updateLoadingStep(index) {
+      // reveal steps sequentially (1-4)
+      for (let i=1;i<=4;i++){
+        const el = document.getElementById('step'+i);
+        if (!el) continue;
+        if (i <= index) el.classList.add('visible'); else el.classList.remove('visible');
+      }
+    }
+
+    // Detect stream type
+    function detectStreamType(url) {
+      if (!url) return 'unknown';
+      const u = url.toLowerCase();
+      if (u.includes('.m3u8')) return 'hls';
+      if (u.includes('.mpd')) return 'dash';
+      return 'unknown';
+    }
+
+    // Initialize player (uses global channelData and streamUrl)
+    async function initializePlayer() {
+      try {
+        showLoadingOverlay(true);
+        updateLoadingStep(1);
+        updateLoadingSubtext('Detecting stream format...');
+        const video = document.getElementById('video');
+        const streamType = detectStreamType(streamUrl);
+
+        // set timeout if taking too long
+        loadingTimeout = setTimeout(()=>{
+          showError('Stream is taking longer than expected. Try external player or refresh.','Loading Timeout');
+        }, 240000);
+
+        // iOS tweaks
+        if (isIOS) {
+          video.setAttribute('webkit-playsinline','true');
+          video.setAttribute('playsinline','true');
+          video.muted = true;
+          video.autoplay = false;
+        }
+
+        // Update steps for UI
+        updateLoadingStep(2);
+        updateLoadingSubtext('Configuring player (DRM if provided)...');
+
+        // If HLS and supported via hls.js (non-safari)
+        if (streamType === 'hls' && typeof Hls !== 'undefined' && Hls.isSupported() && !isSafari) {
+          updateLoadingStep(3);
+          const hlsConfig = { enableWorker:true, lowLatencyMode:true, backBufferLength: 30 };
+          hlsPlayer = new Hls(hlsConfig);
+
+          // Add cookie/referrer/origin via loader (hls's xhrSetup)
+          hlsPlayer.config.xhrSetup = function(xhr, url) {
+            // cookie
+            if (channelData.cookie && channelData.cookie.cookie) {
+              xhr.setRequestHeader('Cookie', channelData.cookie.cookie);
+            }
+            if (channelData.user_agent) {
+              try { xhr.setRequestHeader('User-Agent', channelData.user_agent); } catch(e) {}
+            }
+            if (channelData.referer) xhr.setRequestHeader('Referer', channelData.referer);
+            if (channelData.origin) xhr.setRequestHeader('Origin', channelData.origin);
+          };
+
+          hlsPlayer.loadSource(streamUrl);
+          hlsPlayer.attachMedia(video);
+
+          hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
+            clearTimeout(loadingTimeout);
+            updateLoadingStep(4);
+            updateLoadingSubtext('Starting playback...');
+            showLoadingOverlay(false);
+            if (isIOS) showIOSPlayButton();
+            else {
+              video.play().catch(e => { console.log('autoplay prevented',e); showIOSPlayButton(); });
+            }
+          });
+
+          hlsPlayer.on(Hls.Events.ERROR, (event, data) => {
+            console.error('HLS error', data);
+            if (data.fatal) fallbackToNativePlayback();
+          });
+
+        } else if (channelData.clear_key_id && channelData.clear_key_key && typeof shaka !== 'undefined' && shaka.Player.isBrowserSupported()) {
+          // Use Shaka for DASH/DRM or clear keys
+          updateLoadingStep(3);
+          player = new shaka.Player(video);
+          player.configure({
+            streaming: { bufferingGoal: 30, rebufferingGoal: 15, bufferBehind: 30 },
+            drm: { clearKeys: { [channelData.clear_key_id]: channelData.clear_key_key } }
+          });
+
+          // request filter for cookies, referer, origin, user-agent
+          player.getNetworkingEngine().registerRequestFilter((type, request) => {
+            if (type === shaka.net.NetworkingEngine.RequestType.MANIFEST ||
+                type === shaka.net.NetworkingEngine.RequestType.SEGMENT) {
+              if (channelData.cookie && channelData.cookie.cookie) {
+                if (!request.uris.some(u => u.includes(channelData.cookie.cookie))) {
+                  request.uris = request.uris.map(uri => uri.includes('?') ? uri + '&' + channelData.cookie.cookie : uri + '?' + channelData.cookie.cookie);
+                }
+              }
+              if (channelData.user_agent) request.headers['User-Agent'] = channelData.user_agent;
+              if (channelData.referer) request.headers['Referer'] = channelData.referer;
+              if (channelData.origin) request.headers['Origin'] = channelData.origin;
+            }
+          });
+
+          player.addEventListener('error', (e) => { console.error('Shaka error', e); fallbackToNativePlayback(); });
+
+          await player.load(streamUrl);
+          clearTimeout(loadingTimeout);
+          updateLoadingStep(4);
+          updateLoadingSubtext('Starting playback...');
+          showLoadingOverlay(false);
+          if (isIOS) showIOSPlayButton(); else video.play().catch(e => { console.log('play prevented', e); showIOSPlayButton(); });
+
+        } else {
+          fallbackToNativePlayback();
+        }
+
+        // Standard video listeners
+        video.addEventListener('canplay', () => {
+          clearTimeout(loadingTimeout);
+          showLoadingOverlay(false);
+          if (!isIOS && video.paused) {
+            video.play().catch(e => { console.log('auto prevented',e); showIOSPlayButton(); });
+          }
+        });
+        video.addEventListener('error', (e) => {
+          clearTimeout(loadingTimeout);
+          console.error('Video element error', e);
+          showError('Failed to load video stream. Try external player or refresh.','Video Error');
+        });
+
+      } catch (err) {
+        clearTimeout(loadingTimeout);
+        console.error('initializePlayer err', err);
+        showError('Failed to initialize player.','Initialization Error');
+      }
+    }
+
+    function fallbackToNativePlayback() {
+      updateLoadingSubtext('Using native playback...');
+      const video = document.getElementById('video');
+      // cleanup
+      if (hlsPlayer) { try { hlsPlayer.destroy(); } catch(e){} hlsPlayer = null; }
+      if (player) { try{ player.destroy(); } catch(e){} player = null; }
+      video.src = streamUrl;
+      video.load();
+      clearTimeout(loadingTimeout);
+      updateLoadingStep(4);
+      showLoadingOverlay(false);
+      if (isIOS) showIOSPlayButton(); else video.play().catch(e=>{ console.log('play prevented', e); showIOSPlayButton(); });
+    }
+
+    // iOS play overlay
+    function showIOSPlayButton() {
+      if (document.getElementById('iosPlayButton')) return;
+      const div = document.createElement('div');
+      div.id = 'iosPlayButton';
+      Object.assign(div.style, {
+        position: 'absolute', zIndex: 250, left: '50%', top: '50%', transform: 'translate(-50%,-50%)',
+        width:'88px', height:'88px', borderRadius:'50%', background:'rgba(0,0,0,0.6)', display:'flex', alignItems:'center', justifyContent:'center', border:'2px solid #fff', cursor:'pointer'
+      });
+      const tri = document.createElement('div');
+      Object.assign(tri.style, {
+        width:'0', height:'0', borderLeft:'26px solid #fff', borderTop:'16px solid transparent', borderBottom:'16px solid transparent', marginLeft:'6px'
+      });
+      div.appendChild(tri);
+      div.addEventListener('click', ()=>{
+        const video = document.getElementById('video');
+        video.muted = false;
+        video.play().then(()=>{ hideIOSPlayButton(); }).catch(err=>{
+          console.error('ios play failed', err);
+          video.muted = true;
+          video.play().then(()=>{ hideIOSPlayButton(); });
+        });
+      });
+      document.body.appendChild(div);
+    }
+    function hideIOSPlayButton(){ const el = document.getElementById('iosPlayButton'); if(el) el.remove(); }
+
+    function updateLoadingSubtext(txt) {
+      const el = document.getElementById('loaderSub');
+      if (el) el.textContent = txt || '';
+    }
+
+    /* --- GUI -> apply values and start --- */
+    const playBtn = document.getElementById('playBtn');
+    playBtn.addEventListener('click', onPlayClicked);
+
+    function onPlayClicked() {
+      // read form values
+      const media = document.getElementById('mediaUrl').value.trim();
+      const cookie = document.getElementById('cookieVal').value.trim();
+      const referer = document.getElementById('refererVal').value.trim();
+      const origin = document.getElementById('originVal').value.trim();
+      const license = document.getElementById('licenseUrl').value.trim();
+      const kid = document.getElementById('clearKid').value.trim();
+      const key = document.getElementById('clearKey').value.trim();
+
+      if (!media) {
+        showError('Please paste the Media Stream URL first (top field).','Missing URL');
+        return;
+      }
+
+      // update channelData and streamUrl
+      channelData.manifest_uri = media;
+      streamUrl = media;
+      if (cookie) channelData.cookie.cookie = cookie; else channelData.cookie.cookie = "ENTER COOKIE";
+      if (referer) channelData.referer = referer;
+      if (origin) channelData.origin = origin;
+      if (license) channelData.license = license;
+      if (kid) channelData.clear_key_id = kid;
+      if (key) channelData.clear_key_key = key;
+
+      // hide GUI, show player & loader
+      document.getElementById('guiWrap').style.display = 'none';
+      document.getElementById('playerContainer').style.display = 'block';
+      showLoadingOverlay(true);
+
+      // animate loader steps
+      updateLoadingStep(0);
+      updateLoadingSubtext('Starting...');
+      setTimeout(()=> updateLoadingStep(1), 350);
+      setTimeout(()=> updateLoadingStep(2), 900);
+      setTimeout(()=> updateLoadingStep(3), 1400);
+      setTimeout(()=> updateLoadingStep(4), 2100);
+
+      // run initialize after small delay so loader shows
+      setTimeout(() => {
+        initializePlayer();
+      }, 1100);
+    }
+
+    // Small UX: show/hide header controls on interaction
+    function hideControls() { document.getElementById('header').classList.add('hidden'); }
+    function showControls() {
+      document.getElementById('header').classList.remove('hidden');
+      clearTimeout(hideControlsTimeout);
+      hideControlsTimeout = setTimeout(hideControls, 3000);
+    }
+    document.addEventListener('click', (e)=> {
+      if (!e.target.closest('#iosPlayButton')) showControls();
+    });
+    document.addEventListener('touchstart', (e)=> {
+      if (!e.target.closest('#iosPlayButton')) showControls();
+    });
+    setTimeout(hideControls, 3000);
+
+    // Telegram WebApp niceties (kept)
+    if (tg) {
+      tg.ready();
+      tg.expand();
+      tg.enableClosingConfirmation();
+      if (tg.setFullScreen) tg.setFullScreen(true);
+      if (tg.MainButton) tg.MainButton.hide();
+      if (tg.BackButton) tg.BackButton.hide();
+    }
+    window.addEventListener('orientationchange', ()=> { setTimeout(()=> { if(tg) { tg.expand(); if (tg.setFullScreen) tg.setFullScreen(true);} }, 500); });
+    window.addEventListener('resize', ()=> { if (tg) tg.expand(); });
+    window.addEventListener('focus', ()=> { if (tg && tg.setFullScreen) tg.setFullScreen(true); });
+
+    // cleanup
+    window.addEventListener('beforeunload', ()=> {
+      clearTimeout(loadingTimeout);
+      clearTimeout(hideControlsTimeout);
+      if (hlsPlayer) try { hlsPlayer.destroy(); } catch(e){}
+      if (player) try { player.destroy(); } catch(e){}
+    });
+  
+  // Clear buttons functionality
+  document.querySelectorAll('.clear-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = document.getElementById(btn.dataset.target);
+      if (target) target.value = '';
+    });
+  });
+
+  // Back button logic
+  const backBtn = document.getElementById('backBtn');
+  backBtn.addEventListener('click', () => {
+    document.getElementById('playerContainer').style.display = 'none';
+    document.getElementById('guiWrap').style.display = 'flex';
+    backBtn.classList.remove('visible');
+  });
+
+  // Hide play button after play
+  function hidePlayButton() {
+    document.getElementById('playBtn').style.display = 'none';
+  }
+
+  // Modify onPlayClicked
+  const origOnPlayClicked = onPlayClicked;
+  function onPlayClickedWrapper() {
+    origOnPlayClicked();
+    hidePlayButton();
+    backBtn.classList.remove('visible'); // start hidden
+  }
+  playBtn.removeEventListener('click', onPlayClicked);
+  playBtn.addEventListener('click', onPlayClickedWrapper);
+
+  // Show back button only on interaction
+  function showBackBtn() {
+    if (document.getElementById('playerContainer').style.display !== 'none') {
+      backBtn.classList.add('visible');
+      clearTimeout(hideControlsTimeout);
+      hideControlsTimeout = setTimeout(() => backBtn.classList.remove('visible'), 3000);
+    }
+  }
+  document.addEventListener('click', showBackBtn);
+  document.addEventListener('touchstart', showBackBtn);
+
+// --- Modernized enhancements ---
+
+// Show/hide back button on interaction or pause
+const videoEl = document.getElementById('video');
+
+function showBackButton() {
+  if (document.getElementById('playerContainer').style.display !== 'none') {
+    backBtn.classList.add('visible');
+    clearTimeout(hideControlsTimeout);
+    hideControlsTimeout = setTimeout(() => backBtn.classList.remove('visible'), 3000);
+  }
+}
+
+videoEl.addEventListener('pause', showBackButton);
+document.addEventListener('mousemove', showBackButton);
+document.addEventListener('touchstart', showBackButton);
+
+// Update back button logic to properly reset GUI & player
+backBtn.addEventListener('click', () => {
+  try {
+    if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
+    if (player) { player.destroy(); player = null; }
+    videoEl.pause();
+    videoEl.removeAttribute('src');
+    videoEl.load();
+  } catch (e) { console.warn('cleanup error', e); }
+
+  document.getElementById('playerContainer').style.display = 'none';
+  document.getElementById('guiWrap').style.display = 'flex';
+  document.getElementById('playBtn').style.display = 'flex';
+  backBtn.classList.remove('visible');
+});
+
+// Responsive design improvements
+window.addEventListener('resize', () => {
+  const gui = document.querySelector('.gui');
+  if (window.innerWidth > 768) {
+    gui.style.maxWidth = '520px';
+    gui.style.width = '100%';
+    gui.style.margin = 'auto';
+  } else {
+    gui.style.width = '94%';
+    gui.style.maxWidth = 'none';
+  }
+});
+
+// Add some smooth fade effects for GUI/player transitions
+document.getElementById('playerContainer').style.transition = 'opacity 0.4s ease';
+document.getElementById('guiWrap').style.transition = 'opacity 0.4s ease';
+
+// Improve back button appearance
+const style = document.createElement('style');
+style.innerHTML = `
+  .back-btn {
+    transition: opacity 0.4s ease, transform 0.3s ease;
+  }
+  .back-btn:hover {
+    transform: scale(1.08);
+    background: rgba(30, 144, 255, 0.6);
+  }
+  .player-container {
+    animation: fadeIn 0.4s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+`;
+document.head.appendChild(style);
+</script>
+
+
+<!-- 🔸 Toggle Switch Button (Go to new_player.html) -->
+<div class="switch-toggle" onclick="window.location.href='new_player.html'">
+  <div class="switch-circle"></div>
+</div>
+
+
+<!-- 🔸 Toggle Switch Button -->
+<div class="switch-toggle" onclick="window.location.href='new_player_with_toggle.html'">
+  <div class="switch-circle"></div>
+</div>
+
 </body>
 </html>
