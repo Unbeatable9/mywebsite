@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Playflix — Netflix-style Player (Plus)</title>
+
+  <!-- HLS & Shaka -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.0/shaka-player.compiled.min.js"></script>
+
+  <style>
+    /* Minimal reset & fonts */
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;background:#040404;color:#fff;font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif}
+    a{color:inherit}
+
+    .stage{min-height:100vh;display:grid;place-items:center;padding:28px;background:linear-gradient(180deg,#000,#0b0b0b)}
+
+    /* Landing card */
+    .landing{width:min(1100px,96%);display:grid;grid-template-columns:1fr 420px;border-radius:10px;overflow:hidden;background:linear-gradient(180deg,rgba(20,20,20,0.85),rgba(8,8,8,0.6));border:1px solid rgba(255,255,255,0.04);box-shadow:0 30px 60px rgba(0,0,0,0.6)}
+    .left{padding:44px;display:flex;flex-direction:column;gap:18px}
+    .brand{color:#e50914;font-weight:800;font-size:28px}
+    .headline{font-weight:800;font-size:34px}
+    .sub{color:rgba(255,255,255,0.78);max-width:70%}
+
+    .right{padding:36px;display:flex;flex-direction:column;gap:14px;justify-content:center}
+    .input-row{display:flex;gap:10px;align-items:center}
+    .url-input{flex:1;padding:12px 14px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);color:#fff;font-size:14px;outline:none}
+    .btn{background:#e50914;color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer;font-weight:700}
+    .btn.secondary{background:rgba(255,255,255,0.04)}
+    .big-play{width:84px;height:84px;border-radius:50%;background:linear-gradient(#e50914,#c80c10);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 10px 30px rgba(233,9,20,0.28)}
+    .big-play svg{fill:#fff;width:28px;height:28px}
+
+    /* Player screen */
+    .player-screen{position:fixed;inset:0;background:#000;display:none;z-index:120;align-items:center;justify-content:center}
+    .player-wrap{width:100%;max-width:1400px;height:84vh;background:#000;position:relative;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+    video#player{width:100%;height:100%;object-fit:cover;background:#000}
+
+    .player-top{position:absolute;left:0;right:0;top:0;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg,rgba(0,0,0,0.6),transparent);pointer-events:none}
+    .title{pointer-events:auto;color:#fff;font-weight:700;letter-spacing:.6px}
+    .back-btn{pointer-events:auto;display:flex;gap:8px;align-items:center;cursor:pointer;color:#fff;background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:6px}
+
+    /* controls */
+    .controls{position:absolute;left:0;right:0;bottom:0;padding:12px 18px;display:flex;flex-direction:column;gap:8px;background:linear-gradient(0deg,rgba(0,0,0,0.6),transparent);pointer-events:none}
+    .controls-row{display:flex;align-items:center;gap:12px;pointer-events:auto}
+    .control-btn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);padding:8px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .control-btn svg{width:18px;height:18px;fill:#fff}
+    .time{font-size:13px;color:rgba(255,255,255,0.86);min-width:72px}
+    .seek{width:100%;height:6px;background:rgba(255,255,255,0.06);border-radius:6px;appearance:none}
+    .seek::-webkit-slider-thumb{appearance:none;width:12px;height:12px;border-radius:50%;background:#e50914;border:2px solid rgba(0,0,0,0.45);margin-top:-3px}
+    .volume-range{width:120px;height:6px;background:rgba(255,255,255,0.06);border-radius:6px;appearance:none}
+    .volume-range::-webkit-slider-thumb{appearance:none;width:10px;height:10px;border-radius:50%;background:#fff}
+
+    .center-overlay{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;gap:10px;pointer-events:none}
+    .overlay-play{pointer-events:auto;width:96px;height:96px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);border:2px solid rgba(255,255,255,0.08);cursor:pointer}
+    .overlay-play svg{width:36px;height:36px;fill:#fff}
+
+    .loader{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:80;width:96px;height:96px;display:none;align-items:center;justify-content:center;border-radius:12px;background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.04)}
+    .spinner{width:46px;height:46px;border-radius:50%;border:4px solid rgba(255,255,255,0.08);border-top-color:rgba(233,9,20,0.9);animation:spin 1s linear infinite}
+    @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+    .error-box{position:absolute;left:50%;top:22%;transform:translateX(-50%);background:rgba(244,67,54,0.95);color:#fff;padding:14px 18px;border-radius:8px;z-index:200;display:none}
+
+    /* settings menu */
+    .gear{pointer-events:auto;display:flex;gap:8px;align-items:center;cursor:pointer;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);padding:8px;border-radius:6px}
+    .gear svg{width:18px;height:18px;fill:#fff}
+    .menu-panel{position:absolute;right:18px;bottom:76px;background:rgba(10,10,10,0.95);border:1px solid rgba(255,255,255,0.06);padding:12px;border-radius:8px;width:260px;display:none;z-index:220}
+    .menu-panel h4{font-size:13px;margin-bottom:8px}
+    .menu-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .select, .toggle {background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);color:#fff;padding:8px;border-radius:6px;width:100%}
+    .toggle{display:flex;align-items:center;gap:8px;justify-content:space-between}
+    .small{font-size:13px;color:rgba(255,255,255,0.75)}
+
+    /* top-right share/download */
+    .top-right-actions{display:flex;gap:8px;align-items:center;pointer-events:auto}
+    .icon-btn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);padding:8px;border-radius:6px;cursor:pointer}
+
+    @media (max-width:880px){.landing{grid-template-columns:1fr}.player-wrap{height:60vh}.volume-range{display:none}}
+  </style>
+
+<style>
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Toggle switch styling */
+.switch-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 60px;
+  height: 30px;
+  background: #1e90ff;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  z-index: 9999;
+}
+.switch-circle {
+  width: 22px;
+  height: 22px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.3s ease;
+}
+.switch-toggle.active {
+  background: #e50914;
+}
+.switch-toggle.active .switch-circle {
+  transform: translateX(30px);
+}
+</style>
+
+
+<style>
+.switch-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 60px;
+  height: 30px;
+  background: #1e90ff;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  z-index: 999999; /* ensure visibility over all elements */
+}
+.switch-circle {
+  width: 22px;
+  height: 22px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.3s ease;
+}
+.switch-toggle.active {
+  background: #e50914;
+}
+.switch-toggle.active .switch-circle {
+  transform: translateX(30px);
+}
+</style>
+
+</head>
+<body>
+  <main class="stage">
+
+    <!-- Landing -->
+    <section class="landing" id="home">
+      <div class="left">
+        <div class="brand">PLAYFLIX</div>
+        <div class="headline">Stream anything — cinematic playback, now with settings & sharing.</div>
+        <div class="sub">Paste a stream URL (HLS/DASH/MP4) or choose a local file. Open settings to manually select quality or subtitles, or leave adaptive mode on.</div>
+      </div>
+
+      <aside class="right">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="small">Paste URL or pick a local file</div>
+          <div class="small">Supports .m3u8 .mpd .mp4</div>
+        </div>
+
+        <div class="input-row" style="margin-top:10px">
+          <input id="inputUrl" class="url-input" placeholder="https://example.com/stream/index.m3u8 or https://.../video.mp4" />
+          <button id="playLinkBtn" class="btn">Play</button>
+        </div>
+
+        <div class="input-row">
+          <input id="filePicker" type="file" accept="video/*,application/dash+xml" style="display:none" />
+          <label for="filePicker" class="btn secondary" id="pickBtn">Choose File</label>
+          <button id="openHomePlay" class="btn">Open Player</button>
+        </div>
+
+        <div style="margin-top:18px;display:flex;align-items:center;gap:12px">
+          <div class="big-play" id="bigPlay" title="Start">
+            <svg viewBox="0 0 24 24"><path d="M5 3v18l15-9L5 3z"/></svg>
+          </div>
+          <div style="color:rgba(255,255,255,0.85);font-weight:700">Start playback</div>
+        </div>
+      </aside>
+    </section>
+
+    <!-- Player screen -->
+    <section class="player-screen" id="playerScreen" aria-hidden="true">
+      <div class="player-wrap" id="playerWrap">
+        <video id="player" playsinline webkit-playsinline preload="metadata"></video>
+
+        <!-- top bar -->
+        <div class="player-top">
+          <div style="display:flex;gap:12px;align-items:center">
+            <div class="back-btn" id="backToHome"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" style="stroke:#fff;stroke-width:2"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>Back</div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="title" id="videoTitle">PLAYFLIX</div>
+            <div class="top-right-actions">
+              <div class="icon-btn" id="downloadBtn" title="Download current video">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="1.4"><path d="M12 3v12"/><path d="M5 12l7 7 7-7"/><path d="M5 21h14"/></svg>
+              </div>
+              <div class="icon-btn" id="shareBtn" title="Share link">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="1.4"><path d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>
+              </div>
+              <div class="gear" id="gearBtn" title="Settings">
+                <svg viewBox="0 0 24 24"><path d="M12 8.5A3.5 3.5 0 1012 15.5 3.5 3.5 0 0012 8.5z"/><path d="M19.4 15a1.6 1.6 0 00.33 1.74 9.36 9.36 0 01-1.39 1.39 1.6 1.6 0 00-1.74-.33 1.6 1.6 0 00-.95 1.47v.7A9.46 9.46 0 0112 22a9.46 9.46 0 01-2.69-.33v-.7a1.6 1.6 0 00-.95-1.47 1.6 1.6 0 00-1.74.33 9.36 9.36 0 01-1.39-1.39 1.6 1.6 0 00.33-1.74 1.6 1.6 0 00-1.47-.95h-.7A9.46 9.46 0 012 12a9.46 9.46 0 01.33-2.69h.7a1.6 1.6 0 001.47-.95 1.6 1.6 0 00-.33-1.74A9.36 9.36 0 015.2 3.99 1.6 1.6 0 016.94 4.3c.4.2.77.51 1.09.86.3.33.59.7.86 1.09.2.31.43.61.66.9.25.34.5.67.78.98.34.36.64.68.96.96" /></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- center overlay play -->
+        <div class="center-overlay" id="centerOverlay" style="display:none;pointer-events:none">
+          <div class="overlay-play" id="overlayPlayBtn" title="Play/Pause" style="pointer-events:auto">
+            <svg viewBox="0 0 24 24"><path d="M5 3v18l15-9L5 3z"/></svg>
+          </div>
+        </div>
+
+        <div class="loader" id="loader"><div class="spinner"></div></div>
+        <div class="error-box" id="errorBox">Playback failed</div>
+
+        <!-- settings panel -->
+        <div class="menu-panel" id="menuPanel" role="dialog" aria-hidden="true">
+          <h4>Playback Settings</h4>
+
+          <div class="menu-row">
+            <div style="width:100%"><div class="small">Quality</div>
+              <select id="qualitySelect" class="select">
+                <option value="auto">Auto (adaptive)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="menu-row">
+            <div style="width:100%"><div class="small">Subtitles</div>
+              <select id="subtitleSelect" class="select"><option value="off">Off</option></select>
+            </div>
+          </div>
+
+          <div class="menu-row">
+            <div class="small">Autoplay</div>
+            <label class="toggle"><input type="checkbox" id="autoplayToggle" checked /> <span style="opacity:.9">Enabled</span></label>
+          </div>
+
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button id="closeMenu" class="btn secondary" style="flex:1">Close</button>
+            <button id="applySettings" class="btn" style="flex:1">Apply</button>
+          </div>
+        </div>
+
+        <!-- controls -->
+        <div class="controls" id="controls">
+          <input type="range" id="seek" class="seek" min="0" max="100" value="0" step="0.1" aria-label="Seek" />
+          <div class="controls-row">
+            <div style="display:flex;gap:10px;align-items:center">
+              <div class="control-btn" id="playPauseBtn" title="Play / Pause">
+                <svg id="playIcon" viewBox="0 0 24 24"><path d="M5 3v18l15-9L5 3z"/></svg>
+                <svg id="pauseIcon" viewBox="0 0 24 24" style="display:none"><path d="M6 19h4V5H6v14zM14 5v14h4V5h-4z"/></svg>
+              </div>
+
+              <div class="time" id="timeDisplay">0:00 / 0:00</div>
+
+              <div class="control-btn" id="muteBtn" title="Mute / Unmute">
+                <svg id="volIcon" viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3z"/></svg>
+              </div>
+
+              <input type="range" id="volume" class="volume-range" min="0" max="1" step="0.05" value="1" aria-label="Volume" />
+            </div>
+
+            <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+              <button class="control-btn" id="fullscreenBtn" title="Fullscreen"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zM19 5h-5v2h3v3h2V5zM7 5h5V3H5v5h2V5zM14 19v-2h3v-3h2v5h-5z"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+  (function(){
+    // Elements
+    const home = document.getElementById('home');
+    const playerScreen = document.getElementById('playerScreen');
+    const player = document.getElementById('player');
+    const backToHome = document.getElementById('backToHome');
+    const inputUrl = document.getElementById('inputUrl');
+    const playLinkBtn = document.getElementById('playLinkBtn');
+    const filePicker = document.getElementById('filePicker');
+    const pickBtn = document.getElementById('pickBtn');
+    const bigPlay = document.getElementById('bigPlay');
+    const openHomePlay = document.getElementById('openHomePlay');
+
+    const loader = document.getElementById('loader');
+    const overlayPlayBtn = document.getElementById('overlayPlayBtn');
+    const centerOverlay = document.getElementById('centerOverlay');
+    const errorBox = document.getElementById('errorBox');
+
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const playIcon = document.getElementById('playIcon');
+    const pauseIcon = document.getElementById('pauseIcon');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const seek = document.getElementById('seek');
+    const muteBtn = document.getElementById('muteBtn');
+    const volIcon = document.getElementById('volIcon');
+    const volume = document.getElementById('volume');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const videoTitle = document.getElementById('videoTitle');
+    const controls = document.getElementById('controls');
+
+    const gearBtn = document.getElementById('gearBtn');
+    const menuPanel = document.getElementById('menuPanel');
+    const qualitySelect = document.getElementById('qualitySelect');
+    const subtitleSelect = document.getElementById('subtitleSelect');
+    const autoplayToggle = document.getElementById('autoplayToggle');
+    const applySettings = document.getElementById('applySettings');
+    const closeMenu = document.getElementById('closeMenu');
+
+    const downloadBtn = document.getElementById('downloadBtn');
+    const shareBtn = document.getElementById('shareBtn');
+
+    // State
+    let hls = null;
+    let shakaPlayer = null;
+    let activeSource = null; // { type, src, title }
+    let hideControlsTimer = null;
+    let errorTimeout = null;
+
+    // Utility UI
+    function showPlayer(){ home.style.display='none'; playerScreen.style.display='flex'; playerScreen.setAttribute('aria-hidden','false'); showControlsTemporarily(); }
+    function hidePlayer(){ home.style.display=''; playerScreen.style.display='none'; playerScreen.setAttribute('aria-hidden','true'); stopAndCleanup(); }
+    function showLoader(show=true){ loader.style.display = show ? 'flex' : 'none'; }
+    function showError(msg){ clearTimeout(errorTimeout); errorBox.textContent = msg || 'Playback failed'; errorBox.style.display = 'block'; errorTimeout = setTimeout(()=> errorBox.style.display='none',6000); }
+    function clearError(){ errorBox.style.display='none'; clearTimeout(errorTimeout); }
+    function formatTime(s){ if (!isFinite(s)) return '0:00'; s=Math.floor(s); const m=Math.floor(s/60); const sec=s%60; return `${m}:${sec.toString().padStart(2,'0')}`; }
+    function updateTimeUI(){ const cur = player.currentTime || 0; const dur = player.duration || 0; timeDisplay.textContent = `${formatTime(cur)} / ${formatTime(dur)}`; if (isFinite(dur) && dur>0){ seek.max = dur; seek.value = Math.min(cur,dur);} else { seek.value=0; seek.max=100; } }
+
+    function updatePlayStateIcons(){ if (player.paused || player.ended){ playIcon.style.display=''; pauseIcon.style.display='none'; } else { playIcon.style.display='none'; pauseIcon.style.display=''; } }
+    function showControlsTemporarily(){ controls.style.pointerEvents='auto'; clearTimeout(hideControlsTimer); hideControlsTimer = setTimeout(()=>{ controls.style.pointerEvents='none'; },3500); }
+
+    // Cleanup
+    function stopAndCleanup(){
+      try{ if (hls){ hls.destroy(); hls = null; } }catch(e){}
+      try{ if (shakaPlayer){ shakaPlayer.destroy(); shakaPlayer = null; } }catch(e){}
+      try{
+        player.pause();
+        if (player.src && player.src.startsWith('blob:')) URL.revokeObjectURL(player.src);
+        player.removeAttribute('src'); player.load();
+      }catch(e){}
+      activeSource = null; showLoader(false); clearError(); centerOverlay.style.display='none';
+      // reset quality options
+      qualitySelect.innerHTML = '<option value="auto">Auto (adaptive)</option>';
+      subtitleSelect.innerHTML = '<option value="off">Off</option>';
+    }
+
+    // Playback setup
+    async function playSource(src, typeHint='auto', title='PLAYFLIX'){
+      clearError(); showLoader(true); showPlayer(); videoTitle.textContent = title || 'PLAYFLIX';
+      activeSource = { type: typeHint, src, title };
+      // cleanup previous
+      if (hls){ try{ hls.destroy(); }catch(e){} hls=null; }
+      if (shakaPlayer){ try{ shakaPlayer.destroy(); }catch(e){} shakaPlayer=null; }
+      player.removeAttribute('src'); player.load();
+
+      const lower = src.toLowerCase();
+      const isM3U8 = lower.includes('.m3u8');
+      const isMPD = lower.includes('.mpd');
+      const isFile = src.startsWith('blob:') || typeHint==='file';
+
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+      try {
+        if (isM3U8 && window.Hls && Hls.isSupported() && !isSafari){
+          hls = new Hls({ enableWorker:true, lowLatencyMode:true });
+          // OPTIONAL: can set XHR headers here using hlsConfig.xhrSetup if needed
+          hls.attachMedia(player);
+          hls.on(Hls.Events.MEDIA_ATTACHED, ()=> hls.loadSource(src));
+          hls.on(Hls.Events.MANIFEST_PARSED, ()=> {
+            showLoader(false);
+            populateHlsQualities();
+            populateHlsSubtitles();
+            attemptPlay();
+          });
+          hls.on(Hls.Events.ERROR, (event, data)=> {
+            console.error('hls error', data);
+            if (data.fatal) {
+              showLoader(false);
+              showError('HLS fatal error occurred.');
+            } else {
+              // non-fatal - console logged
+            }
+          });
+          return;
+        }
+
+        if (isMPD && window.shaka && shaka.Player.isBrowserSupported()){
+          shaka.polyfill.installAll();
+          shakaPlayer = new shaka.Player(player);
+          shakaPlayer.getNetworkingEngine().registerRequestFilter((type, request) => {
+            // place to add headers when required
+          });
+          shakaPlayer.addEventListener('error', (e)=> {
+            console.error('shaka error', e);
+            showLoader(false);
+            showError('DASH playback error.');
+          });
+          await shakaPlayer.load(src);
+          showLoader(false);
+          populateShakaQualities();
+          populateShakaSubtitles();
+          attemptPlay();
+          return;
+        }
+
+        // Native file or mp4 or fallback
+        player.src = src;
+        player.load();
+        player.addEventListener('loadedmetadata', ()=> { showLoader(false); populateNativeTextTracks(); attemptPlay(); }, { once:true });
+        // fallback hide loader after some time
+        setTimeout(()=> { showLoader(false); }, 7000);
+      } catch(err){
+        console.error('playSource err', err);
+        showLoader(false);
+        showError('Failed to start playback.');
+      }
+    }
+
+    function attemptPlay(){
+      player.play().then(()=> { updatePlayStateIcons(); centerOverlay.style.display='none'; clearError(); }).catch((e)=> {
+        console.warn('Autoplay blocked or failed', e);
+        centerOverlay.style.display='flex';
+        updatePlayStateIcons();
+      });
+    }
+
+    // HLS helpers: quality & subtitles
+    function populateHlsQualities(){
+      try {
+        if (!hls || !hls.levels) return;
+        // reset
+        qualitySelect.innerHTML = '<option value="auto">Auto (adaptive)</option>';
+        const levels = hls.levels.map((l, idx) => ({ idx, height: l.height || 0, bitrate: l.bitrate || 0 }));
+        // unique heights sorted desc
+        const unique = [];
+        levels.forEach(l=>{
+          const label = l.height ? `${l.height}p` : `${Math.round(l.bitrate/1000)} kbps`;
+          if (!unique.some(u=>u.label===label)) unique.push({ label, idx: l.idx });
+        });
+        unique.sort((a,b)=> {
+          const ah = parseInt(a.label); const bh = parseInt(b.label);
+          return (isNaN(bh)?0:bh) - (isNaN(ah)?0:ah);
+        });
+        unique.forEach(u=> {
+          const opt = document.createElement('option');
+          opt.value = u.idx;
+          opt.textContent = u.label;
+          qualitySelect.appendChild(opt);
+        });
+      } catch(e){ console.warn('populateHlsQualities err', e); }
+    }
+    function setHlsQuality(value){
+      if (!hls) return;
+      if (value === 'auto') { hls.currentLevel = -1; } else {
+        const n = Number(value);
+        if (!isNaN(n)) { hls.currentLevel = n; }
+      }
+    }
+    function populateHlsSubtitles(){
+      try{
+        subtitleSelect.innerHTML = '<option value="off">Off</option>';
+        if (!hls || !hls.subtitleTracks) return;
+        hls.subtitleTracks.forEach((t,i)=>{
+          const opt = document.createElement('option'); opt.value = i; opt.textContent = t.name || t.lang || `Subtitle ${i+1}`; subtitleSelect.appendChild(opt);
+        });
+      }catch(e){ console.warn('hls subs err', e); }
+    }
+    function setHlsSubtitle(value){
+      if (!hls) return;
+      if (value === 'off') { hls.subtitleTrack = -1; } else { hls.subtitleTrack = Number(value); }
+    }
+
+    // Shaka helpers: qualities & subtitles
+    function populateShakaQualities(){
+      try{
+        if (!shakaPlayer) return;
+        // variant tracks
+        const tracks = shakaPlayer.getVariantTracks();
+        // gather unique heights sorted desc
+        const unique = [];
+        tracks.forEach(t=>{
+          const label = t.height ? `${t.height}p` : `${Math.round(t.bandwidth/1000)} kbps`;
+          if (!unique.some(u=>u.label===label)) unique.push({ label, id: t.id });
+        });
+        qualitySelect.innerHTML = '<option value="auto">Auto (adaptive)</option>';
+        unique.sort((a,b)=> {
+          const ah = parseInt(a.label); const bh = parseInt(b.label);
+          return (isNaN(bh)?0:bh) - (isNaN(ah)?0:ah);
+        }).forEach(u=>{
+          const opt = document.createElement('option'); opt.value = u.label; opt.textContent = u.label; qualitySelect.appendChild(opt);
+        });
+      }catch(e){ console.warn('populateShakaQualities err', e); }
+    }
+    function setShakaQuality(value){
+      if (!shakaPlayer) return;
+      if (value === 'auto') { shakaPlayer.configure({abr: {enabled: true}}); }
+      else {
+        // disable abr and select matching tracks
+        shakaPlayer.configure({abr:{enabled:false}});
+        const tracks = shakaPlayer.getVariantTracks();
+        // find closest matching height
+        const target = parseInt(value);
+        let chosen = tracks.find(t => t.height === target);
+        if (!chosen) {
+          // fallback to best <= target or highest
+          chosen = tracks.sort((a,b)=>b.height - a.height).find(t => t.height <= target) || tracks[0];
+        }
+        if (chosen) shakaPlayer.selectVariantTrack(chosen, /*clearBuffer=*/true);
+      }
+    }
+
+    function populateShakaSubtitles(){
+      try{
+        subtitleSelect.innerHTML = '<option value="off">Off</option>';
+        if (!shakaPlayer) return;
+        const tracks = shakaPlayer.getTextTracks();
+        tracks.forEach(t=>{
+          const opt = document.createElement('option'); opt.value = t.language + '|' + t.kind; opt.textContent = t.language + (t.label ? ' — ' + t.label : '');
+          subtitleSelect.appendChild(opt);
+        });
+      }catch(e){ console.warn('populateShakaSubtitles err', e); }
+    }
+    function setShakaSubtitle(value){
+      if (!shakaPlayer) return;
+      if (value === 'off') { shakaPlayer.setTextTrackVisibility(false); return; }
+      // value format language|kind (we used)
+      const [lang, kind] = value.split('|');
+      const tracks = shakaPlayer.getTextTracks();
+      const found = tracks.find(t => t.language === lang);
+      if (found) {
+        shakaPlayer.selectTextLanguage(found.language);
+        shakaPlayer.setTextTrackVisibility(true);
+      } else {
+        shakaPlayer.setTextTrackVisibility(false);
+      }
+    }
+
+    // Native text tracks (mp4)
+    function populateNativeTextTracks(){
+      try{
+        subtitleSelect.innerHTML = '<option value="off">Off</option>';
+        const tracks = player.textTracks || [];
+        for (let i=0;i<tracks.length;i++){
+          const t = tracks[i];
+          const opt = document.createElement('option'); opt.value = i; opt.textContent = t.language || t.label || `Subtitle ${i+1}`;
+          subtitleSelect.appendChild(opt);
+        }
+      }catch(e){ console.warn('native subs err', e); }
+    }
+    function setNativeSubtitle(value){
+      try{
+        for (let i=0;i<(player.textTracks || []).length;i++){
+          player.textTracks[i].mode = 'disabled';
+        }
+        if (value === 'off') return;
+        const idx = Number(value);
+        if (!isNaN(idx) && player.textTracks[idx]) player.textTracks[idx].mode = 'showing';
+      }catch(e){ console.warn('setNativeSubtitle err', e); }
+    }
+
+    // Event wiring for quality/subtitle applies
+    applySettings.addEventListener('click', ()=> {
+      // quality
+      const qv = qualitySelect.value;
+      if (hls) setHlsQuality(qv);
+      else if (shakaPlayer) setShakaQuality(qv);
+      // subtitles
+      const sv = subtitleSelect.value;
+      if (hls) setHlsSubtitle(sv);
+      else if (shakaPlayer) setShakaSubtitle(sv);
+      else setNativeSubtitle(sv);
+      // autoplay (persisted in UI only)
+      // close
+      menuPanel.style.display='none';
+    });
+    closeMenu.addEventListener('click', ()=> menuPanel.style.display='none');
+
+    // show/hide menu
+    gearBtn.addEventListener('click', ()=> {
+      menuPanel.style.display = menuPanel.style.display === 'block' ? 'none' : 'block';
+    });
+
+    // Download & Share
+    downloadBtn.addEventListener('click', async ()=> {
+      if (!activeSource || !activeSource.src) { showError('No active source to download'); return; }
+      const src = activeSource.src;
+      if (src.startsWith('blob:')) {
+        // local file object - fetch blob and download
+        try {
+          const resp = await fetch(src);
+          const blob = await resp.blob();
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = (activeSource.title && activeSource.title.replace(/\s+/g,'_')) || 'video';
+          document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(()=> URL.revokeObjectURL(a.href), 30000);
+        } catch(e){ showError('Download failed'); }
+        return;
+      }
+      // If direct mp4 url -> download
+      if (src.match(/\.mp4($|\?)/i)) {
+        // try to download by fetching
+        try {
+          const a = document.createElement('a'); a.href = src; a.download = ''; document.body.appendChild(a); a.click(); a.remove();
+        } catch(e) { showError('Unable to trigger download for this source'); }
+        return;
+      }
+      showError('Download not available for HLS/DASH streams.');
+    });
+
+    shareBtn.addEventListener('click', async ()=> {
+      if (!activeSource || !activeSource.src) { showError('No active source to share'); return; }
+      const src = activeSource.src;
+      try {
+        if (navigator.share && !src.startsWith('blob:')) {
+          await navigator.share({ title: activeSource.title || 'Playflix', text: 'Watch this stream', url: src });
+        } else {
+          // fallback: copy to clipboard
+          await navigator.clipboard.writeText(src);
+          showError('Link copied to clipboard');
+        }
+      } catch(e){ console.warn('share err', e); try { await navigator.clipboard.writeText(src); showError('Link copied to clipboard'); } catch(_) { showError('Share failed'); } }
+    });
+
+    // UI playback controls
+    bigPlay.addEventListener('click', ()=> {
+      const u = inputUrl.value.trim();
+      if (u) playSource(u,'auto', u);
+      else { showPlayer(); centerOverlay.style.display='flex'; }
+    });
+    openHomePlay.addEventListener('click', ()=> { showPlayer(); centerOverlay.style.display='flex'; });
+
+    playLinkBtn.addEventListener('click', ()=> {
+      const u = inputUrl.value.trim();
+      if (!u) { alert('Paste a stream link first.'); inputUrl.focus(); return; }
+      playSource(u,'auto', u);
+    });
+
+    filePicker.addEventListener('change', (ev)=> {
+      const f = ev.target.files && ev.target.files[0];
+      if (!f) return;
+      const url = URL.createObjectURL(f);
+      playSource(url,'file', f.name || 'Local File');
+      setTimeout(()=> filePicker.value = '', 300);
+    });
+    pickBtn.addEventListener('click', ()=> filePicker.click());
+
+    overlayPlayBtn.addEventListener('click', ()=> {
+      if (player.paused || player.ended) player.play().catch(()=>{});
+      else player.pause();
+      updatePlayStateIcons();
+      centerOverlay.style.display = player.paused ? 'flex' : 'none';
+    });
+
+    playPauseBtn.addEventListener('click', ()=> {
+      if (player.paused || player.ended) player.play().catch(()=>{});
+      else player.pause();
+      updatePlayStateIcons(); showControlsTemporarily();
+    });
+
+    document.addEventListener('keydown', (e)=> {
+      if (playerScreen.style.display !== 'flex') return;
+      if (e.code === 'Space') { e.preventDefault(); if (player.paused) player.play().catch(()=>{}); else player.pause(); updatePlayStateIcons(); showControlsTemporarily(); }
+      else if (e.code === 'KeyF') toggleFullscreen();
+    });
+
+    muteBtn.addEventListener('click', ()=> { player.muted = !player.muted; updateVolumeIcon(); showControlsTemporarily(); });
+    function updateVolumeIcon(){ if (player.muted || player.volume===0) volIcon.innerHTML = '<path d="M16.5 12c0-1.77-.77-3.36-1.98-4.47l-1.06 1.06C14.35 9.91 15 10.92 15 12s-.65 2.09-1.59 3.41l1.06 1.06C15.73 15.36 16.5 13.77 16.5 12zM3 10v4h4l5 5V5L7 10H3z"/>'; else volIcon.innerHTML = '<path d="M3 10v4h4l5 5V5L7 10H3z"/>'; }
+    volume.addEventListener('input', (e)=> { player.volume = Number(e.target.value); if (player.volume===0) player.muted=true; else player.muted=false; updateVolumeIcon(); });
+
+    player.addEventListener('timeupdate', ()=> updateTimeUI());
+    player.addEventListener('durationchange', ()=> updateTimeUI());
+    player.addEventListener('progress', ()=> { /* optional buffering UI */ });
+
+    // Seek handling
+    let seeking=false;
+    seek.addEventListener('input', (e)=> { seeking=true; player.currentTime = Number(e.target.value); updateTimeUI(); });
+    seek.addEventListener('change', ()=> seeking=false);
+
+    // playing/waiting/ended
+    player.addEventListener('waiting', ()=> showLoader(true));
+    player.addEventListener('playing', ()=> { showLoader(false); updatePlayStateIcons(); centerOverlay.style.display='none'; clearError(); });
+    player.addEventListener('ended', ()=> { updatePlayStateIcons(); centerOverlay.style.display='flex'; if (autoplayToggle.checked) { /* optionally next */ } });
+
+    // errors — only show real playback errors
+    player.addEventListener('error', (ev)=> {
+      console.error('Video element error:', ev);
+      showLoader(false);
+      const err = player.error;
+      if (!err) { showError('Unknown playback error'); return; }
+      if (err.code === 1) showError('Playback aborted.');
+      else if (err.code === 2) showError('Network error while loading media.');
+      else if (err.code === 3) showError('Decoding error: could not decode video.');
+      else if (err.code === 4) showError('Media source not supported.');
+      else showError('Playback failed.');
+    });
+
+    backToHome.addEventListener('click', ()=> hidePlayer());
+    playerScreen.addEventListener('mousemove', showControlsTemporarily);
+    playerScreen.addEventListener('touchstart', showControlsTemporarily);
+    player.addEventListener('click', ()=> { if (player.paused) player.play().catch(()=>{}); else player.pause(); updatePlayStateIcons(); });
+    player.addEventListener('dblclick', (e)=> { const rect = player.getBoundingClientRect(); const x = e.clientX - rect.left; if (x < rect.width/2) player.currentTime = Math.max(0, player.currentTime - 10); else player.currentTime = Math.min(player.duration || Infinity, player.currentTime + 10); });
+
+    // fullscreen
+    async function toggleFullscreen(){ const elem = document.getElementById('playerWrap'); if (!document.fullscreenElement) { try{ await elem.requestFullscreen(); } catch(e){ console.warn('fs failed', e);} } else { try{ await document.exitFullscreen(); } catch(e){ console.warn('exit fs failed', e);} } }
+    fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+    // Populate native subs (if any)
+    function populateNativeTextTracks(){ try{ subtitleSelect.innerHTML = '<option value="off">Off</option>'; const tracks = player.textTracks || []; for (let i=0;i<tracks.length;i++){ const t = tracks[i]; const opt = document.createElement('option'); opt.value = i; opt.textContent = t.language || t.label || `Subtitle ${i+1}`; subtitleSelect.appendChild(opt); } }catch(e){ console.warn(e); } }
+
+    // When switching subtitle select via UI immediately apply for native players
+    subtitleSelect.addEventListener('change', ()=> {
+      const val = subtitleSelect.value;
+      if (hls) setHlsSubtitle(val);
+      else if (shakaPlayer) setShakaSubtitle(val);
+      else setNativeSubtitle(val);
+    });
+
+    // quality changes applied immediately via select
+    qualitySelect.addEventListener('change', ()=> {
+      const val = qualitySelect.value;
+      if (hls) setHlsQuality(val);
+      else if (shakaPlayer) setShakaQuality(val);
+    });
+
+    // initial UI states
+    updatePlayStateIcons(); updateVolumeIcon();
+
+    // release blob urls on unload
+    window.addEventListener('beforeunload', ()=> { try{ if (player.src && player.src.startsWith('blob:')) URL.revokeObjectURL(player.src); }catch(e){} });
+
+  })();
+  </script>
+
+<!-- 🔸 Toggle Switch Button (Go back to player_modern_fixed.html) -->
+<div class="switch-toggle active" onclick="window.location.href='player_modern_fixed.html'">
+  <div class="switch-circle"></div>
+</div>
+
+
+<!-- 🔸 Toggle Switch Button (Active state for new player) -->
+<div class="switch-toggle active" onclick="window.location.href='player_modern_fixed_with_toggle.html'">
+  <div class="switch-circle"></div>
+</div>
+
+</body>
+</html>
