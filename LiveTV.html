@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LIVE TV</title>
+
+<!-- libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.0/shaka-player.compiled.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js"></script>
+
+<style>
+body{margin:0;padding:0;background:#000;color:#fff;font-family:system-ui,sans-serif;overflow:hidden}
+#channelGui{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;height:100vh;overflow-y:auto;padding:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:16px;width:100%;max-width:1100px;margin-top:30px}
+.card{background:#111;padding:12px;border-radius:10px;display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:all .2s}
+.card:hover{transform:translateY(-5px);background:#1a1a1a}
+.logo{width:80px;height:80px;border-radius:12px;background:#222;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:8px}
+.logo img{width:100%;height:100%;object-fit:contain}
+.name{font-size:14px;text-align:center}
+#loadingMsg{margin-top:100px;font-size:18px;color:#ccc}
+.player-container{position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;display:none;flex-direction:column;z-index:9999}
+.player-header{position:absolute;top:0;left:0;right:0;padding:10px 16px;background:linear-gradient(180deg,rgba(0,0,0,0.7),transparent);display:flex;justify-content:space-between;align-items:center;z-index:10}
+.back-btn{padding:6px 14px;border-radius:6px;background:rgba(255,255,255,0.1);border:0;color:#fff;cursor:pointer}
+video{width:100%;height:100%;object-fit:contain;background:#000}
+.loadingOverlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:5}
+</style>
+</head>
+<body>
+
+<div id="channelGui">
+  <h2>Loading channels...</h2>
+  <div id="loadingMsg">Please wait...</div>
+  <div id="grid" class="grid"></div>
+</div>
+
+<div class="player-container" id="playerContainer">
+  <div class="player-header">
+    <button class="back-btn" id="backBtn">← Back</button>
+    <div id="playerTitle">Live TV</div>
+  </div>
+  <video id="video" autoplay playsinline controls webkit-playsinline></video>
+  <div class="loadingOverlay" id="playerLoading">Loading...</div>
+</div>
+
+<script>
+/* your M3U link (hidden) */
+const M3U_URL = 'https://teachub.strangled.net/10/m3u-proxy.php';
+
+let channels=[];
+const grid=document.getElementById('grid');
+const gui=document.getElementById('channelGui');
+const playerContainer=document.getElementById('playerContainer');
+const playerLoading=document.getElementById('playerLoading');
+const video=document.getElementById('video');
+const backBtn=document.getElementById('backBtn');
+const playerTitle=document.getElementById('playerTitle');
+let player=null,hls=null;
+
+/* Parse M3U format */
+async function loadM3U(){
+ try{
+  const res=await fetch(M3U_URL);
+  const text=await res.text();
+  const lines=text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  for(let i=0;i<lines.length;i++){
+    if(lines[i].startsWith('#EXTINF')){
+      const nameMatch=lines[i].split(',').pop().trim();
+      const logoMatch=/tvg-logo="([^"]+)"/.exec(lines[i]);
+      const groupMatch=/group-title="([^"]+)"/.exec(lines[i]);
+      let logo=logoMatch?logoMatch[1]:null;
+      let group=groupMatch?groupMatch[1]:'';
+      let clearKeyLine=lines.find((_,idx)=>idx>i&&lines[idx].startsWith('#KODIPROP:inputstream.adaptive.license_key'));
+      let uaLine=lines.find((_,idx)=>idx>i&&lines[idx].startsWith('#EXTVLCOPT:http-user-agent'));
+      let cookieLine=lines.find((_,idx)=>idx>i&&lines[idx].startsWith('#EXTHTTP:'));
+      let urlLine=null;
+      for(let j=i+1;j<lines.length;j++){
+        if(!lines[j].startsWith('#')){urlLine=lines[j];break;}
+      }
+      if(!urlLine)continue;
+      const keyParts=clearKeyLine?clearKeyLine.split('=').pop().split(':'):[null,null];
+      const clear_key_id=keyParts[0]||'';
+      const clear_key_key=keyParts[1]||'';
+      const user_agent=uaLine?uaLine.split('=').pop():'';
+      let cookie='';
+      if(cookieLine){
+        try{
+          const json=JSON.parse(cookieLine.slice(9));
+          cookie=json.cookie||'';
+        }catch(e){}
+      }
+      channels.push({
+        name:nameMatch,
+        logo,group,
+        manifest_uri:urlLine,
+        streamUrl:urlLine,
+        clear_key_id,clear_key_key,
+        user_agent,
+        cookie
+      });
+    }
+  }
+  renderGrid();
+ }catch(e){document.getElementById('loadingMsg').textContent='Failed to load M3U';}
+}
+
+function renderGrid(){
+  document.querySelector('h2').textContent='Select a Channel';
+  document.getElementById('loadingMsg').style.display='none';
+  grid.innerHTML='';
+  channels.forEach(ch=>{
+    const c=document.createElement('div');
+    c.className='card';
+    c.innerHTML=`<div class="logo">${ch.logo?`<img src="${ch.logo}">`:ch.name[0]}</div><div class="name">${ch.name}</div>`;
+    c.onclick=()=>playChannel(ch);
+    grid.appendChild(c);
+  });
+}
+
+/* Play clicked channel */
+function playChannel(ch){
+  gui.style.display='none';
+  playerContainer.style.display='flex';
+  playerLoading.style.display='flex';
+  playerTitle.textContent=ch.name;
+  const channelData={
+    name:ch.name,
+    logo:ch.logo,
+    manifest_uri:ch.manifest_uri,
+    group:ch.group,
+    clear_key_id:ch.clear_key_id,
+    clear_key_key:ch.clear_key_key,
+    user_agent:ch.user_agent,
+    cookie:{cookie:ch.cookie},
+    key:ch.name
+  };
+  const streamUrl=ch.streamUrl;
+  startPlayer(channelData,streamUrl);
+}
+
+/* Initialize playback */
+async function startPlayer(channelData,streamUrl){
+  cleanup();
+  const type=streamUrl.includes('.mpd')?'dash':(streamUrl.includes('.m3u8')?'hls':'other');
+  try{
+    if(type==='dash' && typeof shaka!=='undefined' && shaka.Player.isBrowserSupported()){
+      player=new shaka.Player(video);
+      player.configure({
+        drm:{clearKeys:{[channelData.clear_key_id]:channelData.clear_key_key}},
+        streaming:{bufferingGoal:30, rebufferingGoal:15, bufferBehind:30}
+      });
+      if(channelData.user_agent||channelData.cookie.cookie){
+        player.getNetworkingEngine().registerRequestFilter((type,request)=>{
+          if(type===shaka.net.NetworkingEngine.RequestType.MANIFEST||type===shaka.net.NetworkingEngine.RequestType.SEGMENT){
+            if(channelData.user_agent)request.headers['User-Agent']=channelData.user_agent;
+            if(channelData.cookie.cookie){
+              if(!request.uris.some(u=>u.includes(channelData.cookie.cookie))){
+                request.uris=request.uris.map(u=>u+(u.includes('?')?'&':'?')+channelData.cookie.cookie);
+              }
+            }
+          }
+        });
+      }
+      await player.load(streamUrl);
+      playerLoading.style.display='none';
+      video.play().catch(()=>{});
+    }else if(type==='hls' && typeof Hls!=='undefined' && Hls.isSupported()){
+      hls=new Hls();hls.loadSource(streamUrl);hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED,()=>{playerLoading.style.display='none';video.play().catch(()=>{});});
+    }else{
+      video.src=streamUrl;video.load();playerLoading.style.display='none';video.play().catch(()=>{});
+    }
+  }catch(err){
+    console.error(err);
+    playerLoading.textContent='Playback failed';
+  }
+}
+
+/* Cleanup before switching */
+function cleanup(){
+  if(hls){try{hls.destroy();}catch(e){}hls=null;}
+  if(player){try{player.destroy();}catch(e){}player=null;}
+  video.removeAttribute('src');video.load();
+}
+
+/* Back to GUI */
+backBtn.onclick=()=>{
+  cleanup();
+  playerContainer.style.display='none';
+  gui.style.display='flex';
+};
+
+window.addEventListener('load',loadM3U);
+</script>
+</body>
+</html>
