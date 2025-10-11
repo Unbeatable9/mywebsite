@@ -1,1051 +1,599 @@
 <!DOCTYPE html>
-
-<html lang="en">
+<html>
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
-<meta content="yes" name="mobile-web-app-capable"/>
-<meta content="yes" name="apple-mobile-web-app-capable"/>
-<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
-<meta content="#000000" name="theme-color"/>
-<title>LIVE TV</title>
-<!-- players -->
-<script src="https://telegram.org/js/telegram-web-app.js">
-// --- Modernized enhancements ---
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sony liv</title>
 
-// Show/hide back button on interaction or pause
-const videoEl = document.getElementById('video');
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
 
-function showBackButton() {
-  if (document.getElementById('playerContainer').style.display !== 'none') {
-    backBtn.classList.add('visible');
-    clearTimeout(hideControlsTimeout);
-    hideControlsTimeout = setTimeout(() => backBtn.classList.remove('visible'), 3000);
-  }
-}
-
-videoEl.addEventListener('pause', showBackButton);
-document.addEventListener('mousemove', showBackButton);
-document.addEventListener('touchstart', showBackButton);
-
-// Update back button logic to properly reset GUI & player
-backBtn.addEventListener('click', () => {
-  try {
-    if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
-    if (player) { player.destroy(); player = null; }
-    videoEl.pause();
-    videoEl.removeAttribute('src');
-    videoEl.load();
-  } catch (e) { console.warn('cleanup error', e); }
-
-  document.getElementById('playerContainer').style.display = 'none';
-  document.getElementById('guiWrap').style.display = 'flex';
-  document.getElementById('playBtn').style.display = 'flex';
-  backBtn.classList.remove('visible');
-});
-
-// Responsive design improvements
-window.addEventListener('resize', () => {
-  const gui = document.querySelector('.gui');
-  if (window.innerWidth > 768) {
-    gui.style.maxWidth = '520px';
-    gui.style.width = '100%';
-    gui.style.margin = 'auto';
-  } else {
-    gui.style.width = '94%';
-    gui.style.maxWidth = 'none';
-  }
-});
-
-// Add some smooth fade effects for GUI/player transitions
-document.getElementById('playerContainer').style.transition = 'opacity 0.4s ease';
-document.getElementById('guiWrap').style.transition = 'opacity 0.4s ease';
-
-// Improve back button appearance
-const style = document.createElement('style');
-style.innerHTML = `
-  .back-btn {
-    transition: opacity 0.4s ease, transform 0.3s ease;
-  }
-  .back-btn:hover {
-    transform: scale(1.08);
-    background: rgba(30, 144, 255, 0.6);
-  }
-  .player-container {
-    animation: fadeIn 0.4s ease;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; } to { opacity: 1; }
-  }
-`;
-document.head.appendChild(style);
-</script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.0/shaka-player.compiled.min.js">
-// --- Modernized enhancements ---
-
-// Show/hide back button on interaction or pause
-const videoEl = document.getElementById('video');
-
-function showBackButton() {
-  if (document.getElementById('playerContainer').style.display !== 'none') {
-    backBtn.classList.add('visible');
-    clearTimeout(hideControlsTimeout);
-    hideControlsTimeout = setTimeout(() => backBtn.classList.remove('visible'), 3000);
-  }
-}
-
-videoEl.addEventListener('pause', showBackButton);
-document.addEventListener('mousemove', showBackButton);
-document.addEventListener('touchstart', showBackButton);
-
-// Update back button logic to properly reset GUI & player
-backBtn.addEventListener('click', () => {
-  try {
-    if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
-    if (player) { player.destroy(); player = null; }
-    videoEl.pause();
-    videoEl.removeAttribute('src');
-    videoEl.load();
-  } catch (e) { console.warn('cleanup error', e); }
-
-  document.getElementById('playerContainer').style.display = 'none';
-  document.getElementById('guiWrap').style.display = 'flex';
-  document.getElementById('playBtn').style.display = 'flex';
-  backBtn.classList.remove('visible');
-});
-
-// Responsive design improvements
-window.addEventListener('resize', () => {
-  const gui = document.querySelector('.gui');
-  if (window.innerWidth > 768) {
-    gui.style.maxWidth = '520px';
-    gui.style.width = '100%';
-    gui.style.margin = 'auto';
-  } else {
-    gui.style.width = '94%';
-    gui.style.maxWidth = 'none';
-  }
-});
-
-// Add some smooth fade effects for GUI/player transitions
-document.getElementById('playerContainer').style.transition = 'opacity 0.4s ease';
-document.getElementById('guiWrap').style.transition = 'opacity 0.4s ease';
-
-// Improve back button appearance
-const style = document.createElement('style');
-style.innerHTML = `
-  .back-btn {
-    transition: opacity 0.4s ease, transform 0.3s ease;
-  }
-  .back-btn:hover {
-    transform: scale(1.08);
-    background: rgba(30, 144, 255, 0.6);
-  }
-  .player-container {
-    animation: fadeIn 0.4s ease;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; } to { opacity: 1; }
-  }
-`;
-document.head.appendChild(style);
-</script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.4.12/hls.min.js">
-// --- Modernized enhancements ---
-
-// Show/hide back button on interaction or pause
-const videoEl = document.getElementById('video');
-
-function showBackButton() {
-  if (document.getElementById('playerContainer').style.display !== 'none') {
-    backBtn.classList.add('visible');
-    clearTimeout(hideControlsTimeout);
-    hideControlsTimeout = setTimeout(() => backBtn.classList.remove('visible'), 3000);
-  }
-}
-
-videoEl.addEventListener('pause', showBackButton);
-document.addEventListener('mousemove', showBackButton);
-document.addEventListener('touchstart', showBackButton);
-
-// Update back button logic to properly reset GUI & player
-backBtn.addEventListener('click', () => {
-  try {
-    if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
-    if (player) { player.destroy(); player = null; }
-    videoEl.pause();
-    videoEl.removeAttribute('src');
-    videoEl.load();
-  } catch (e) { console.warn('cleanup error', e); }
-
-  document.getElementById('playerContainer').style.display = 'none';
-  document.getElementById('guiWrap').style.display = 'flex';
-  document.getElementById('playBtn').style.display = 'flex';
-  backBtn.classList.remove('visible');
-});
-
-// Responsive design improvements
-window.addEventListener('resize', () => {
-  const gui = document.querySelector('.gui');
-  if (window.innerWidth > 768) {
-    gui.style.maxWidth = '520px';
-    gui.style.width = '100%';
-    gui.style.margin = 'auto';
-  } else {
-    gui.style.width = '94%';
-    gui.style.maxWidth = 'none';
-  }
-});
-
-// Add some smooth fade effects for GUI/player transitions
-document.getElementById('playerContainer').style.transition = 'opacity 0.4s ease';
-document.getElementById('guiWrap').style.transition = 'opacity 0.4s ease';
-
-// Improve back button appearance
-const style = document.createElement('style');
-style.innerHTML = `
-  .back-btn {
-    transition: opacity 0.4s ease, transform 0.3s ease;
-  }
-  .back-btn:hover {
-    transform: scale(1.08);
-    background: rgba(30, 144, 255, 0.6);
-  }
-  .player-container {
-    animation: fadeIn 0.4s ease;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; } to { opacity: 1; }
-  }
-`;
-document.head.appendChild(style);
-</script>
-
-<style>
-    /* --- Base --- */
-    * { box-sizing: border-box; margin:0; padding:0; -webkit-tap-highlight-color: transparent; }
-    html,body { height:100%; }
-    body {
-      background: #050506;
-      color: #fff;
-      font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-      overflow: hidden;
-      min-height: 100vh;
-      -webkit-user-select: none;
-      -webkit-touch-callout: none;
-    }
-
-    /* --- GUI container (initial) --- */
-    .gui-wrap {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      padding: 28px;
-      z-index: 80;
-    }
-
-    .gui {
-      width: 100%;
-      max-width: 520px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      padding: 18px;
-      border-radius: 12px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border: 1px solid rgba(255,255,255,0.04);
-      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
-    }
-
-    .gui h2 {
-      font-size: 18px;
-      font-weight: 600;
-      letter-spacing: 0.2px;
-      color: #e6eefc;
-      margin-bottom: 4px;
-    }
-
-    .input {
-      background: rgba(255,255,255,0.02);
-      border: 1px solid rgba(255,255,255,0.06);
-      padding: 16px;
-      border-radius: 10px;
-      color: #fff;
-      font-size: 16px;
-      outline: none;
-      transition: border-color .15s ease, box-shadow .15s ease;
-      width: 100%;
-    }
-
-    .input::placeholder { color: rgba(255,255,255,0.45); font-size: 15px; }
-    .input:focus { border-color: #2ea3ff; box-shadow: 0 6px 20px rgba(46,163,255,0.08); }
-
-    .two-col {
-      display:flex; gap:10px;
-    }
-
-    .label-row {
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      color: rgba(255,255,255,0.7); font-size: 13px;
-    }
-
-    /* subtle field caption */
-    .small { font-size: 13px; color: rgba(255,255,255,0.55); margin-top: 6px; }
-
-    /* play button floating */
-    .play-fab {
-      position: fixed;
-      right: 18px;
-      bottom: 18px;
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #1e90ff, #2ea3ff);
-      display:flex; align-items:center; justify-content:center;
-      box-shadow: 0 10px 30px rgba(46,163,255,0.18), inset 0 -4px 18px rgba(0,0,0,0.2);
-      z-index: 200;
-      cursor: pointer;
-      border: none;
-      outline: none;
-    }
-
-    .play-fab:active { transform: translateY(2px); }
-    .play-triangle {
-      width: 0; height: 0;
-      border-left: 16px solid #fff;
-      border-top: 10px solid transparent;
-      border-bottom: 10px solid transparent;
-      margin-left: 4px;
-    }
-
-    /* --- Player area (hidden initially) --- */
-    .player-container {
-      position: absolute;
-      inset: 0;
+  <style>
+    /* Reset & base */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
       background: #000;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      z-index: 20;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color: #eee;
     }
 
+    /* Video container (existing) */
+    .shaka-video-container {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
     video {
       width: 100%;
       height: 100%;
-      object-fit: contain;
       background: #000;
+      object-fit: contain;
     }
 
-    /* Header (top) */
-    .header {
-      position: absolute;
+    /* Hide default Shaka spinner (as before) */
+    .shaka-spinner-container,
+    .shaka-spinner,
+    .shaka-spinner-svg {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+    }
+
+    /* Chrome Only Modal (kept) */
+    #chromeModal .modal-content {
+      background: rgba(255, 0, 0, 0.06);
+      border: 1px solid rgba(255, 0, 0, 0.12);
+    }
+    #chromeModal h2 { color: #f87171; }
+    .modal {
+      position: fixed;
       top: 0;
-      left: 0; right: 0;
-      padding: 12px 16px;
-      z-index: 40;
-      display:flex; justify-content:center; align-items:center;
-      background: linear-gradient(180deg, rgba(0,0,0,0.66), rgba(0,0,0,0));
-      pointer-events:none;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      backdrop-filter: blur(6px);
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      animation: fadeIn .4s ease;
     }
-    .channel-name { pointer-events:auto; font-weight:600; color:#fff; text-transform:uppercase; letter-spacing:0.6px; }
+    .modal.hidden { display: none !important; }
+    .modal-content {
+      background: rgba(255,255,255,0.04);
+      border-radius: 16px;
+      padding: 24px;
+      width: 92%;
+      max-width: 420px;
+      text-align: center;
+      color: #f3f4f6;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      backdrop-filter: blur(8px);
+    }
+    @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
 
-    /* --- Loading overlay (modern minimal) --- */
-    .loading-overlay {
+    /* GUI overlay (initial screen) */
+    .gui {
       position: absolute;
       inset: 0;
-      display: none;
-      align-items:center;
-      justify-content:center;
-      z-index: 60;
-      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9998;
+      transition: opacity .45s ease, transform .45s ease;
+      pointer-events: auto;
+    }
+    .gui.hidden {
+      opacity: 0;
+      transform: scale(.99) translateY(8px);
+      pointer-events: none;
     }
 
-    .loading-bg {
-      position:absolute; inset:0;
-      background: linear-gradient(120deg, rgba(5,6,7,0.9), rgba(10,11,12,0.95));
-      mix-blend-mode: normal;
-      filter: blur(0.3px);
-      opacity: 1;
-    }
-
-    .loader-card {
-      z-index: 70;
-      width: min(720px, 92%);
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.012));
-      border: 1px solid rgba(255,255,255,0.04);
+    .panel {
+      width: calc(100% - 40px);
+      max-width: 420px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.06);
       border-radius: 14px;
       padding: 20px;
-      display:flex;
-      gap:18px;
-      align-items:center;
-      box-shadow: 0 12px 45px rgba(0,0,0,0.6);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px) saturate(1.05);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transform-origin: center;
     }
 
-    .loader-visual {
-      width:86px; height:86px; border-radius: 14px;
-      display:flex; align-items:center; justify-content:center;
-      background: linear-gradient(135deg, rgba(46,163,255,0.12), rgba(46,163,255,0.04));
-      position:relative;
-      overflow:hidden;
+    .title {
+      font-weight: 600;
+      font-size: 18px;
+      margin-bottom: 4px;
+      color: #e6eefc;
+      letter-spacing: .2px;
     }
-
-    /* subtle animated ring */
-    .ring {
-      width:56px; height:56px; border-radius:50%;
-      border: 3px solid rgba(255,255,255,0.06);
-      border-top-color: rgba(46,163,255,0.9);
-      animation: spin 1.2s linear infinite;
-    }
-
-    @keyframes spin { from { transform: rotate(0);} to { transform: rotate(360deg);} }
-
-    .loader-texts {
-      flex:1; color:#e6eefc;
-    }
-
-    .step {
-      font-size:15px;
-      color: rgba(230,238,252,0.95);
+    .sub {
+      font-size: 12px;
+      color: rgba(230,238,252,0.6);
       margin-bottom: 6px;
-      opacity: 0;
-      transform: translateY(6px);
-      transition: all 360ms cubic-bezier(.2,.9,.2,1);
     }
 
-    .step.visible { opacity: 1; transform: translateY(0); }
-
-    .substep { font-size:13px; color:rgba(230,238,252,0.65); }
-
-    /* small footer note */
-    .loader-footer { font-size:12px; color: rgba(230,238,252,0.55); margin-top:8px; }
-
-    /* error box reused */
-    .error-message { position: absolute; top: 50%; left:50%; transform:translate(-50%,-50%); background: rgba(244, 67, 54, 0.95); color:#fff; padding:18px; border-radius:12px; z-index:150; max-width:340px; text-align:center; box-shadow: 0 10px 30px rgba(244,67,54,0.24); }
-
-    /* mobile tweaks */
-    @media (max-width:480px) {
-      .gui { padding:14px; gap:12px; }
-      .input { padding:14px; font-size:15px; }
-      .play-fab { width:64px; height:64px; }
+    .field {
+      position: relative;
+      display: flex;
+      align-items: center;
     }
-  
-  .back-btn {
-    position: absolute;
-    top: 14px;
-    left: 14px;
-    z-index: 100;
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: rgba(0,0,0,0.55);
-    border: 1px solid rgba(255,255,255,0.25);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-  .back-btn svg { width:20px; height:20px; stroke:#fff; }
-  .back-btn.visible { opacity: 1; }
+    .field input {
+      width: 100%;
+      padding: 14px 44px 14px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(0,0,0,0.45);
+      color: #e6eefc;
+      outline: none;
+      font-size: 15px;
+      transition: box-shadow .18s ease, border-color .18s ease;
+    }
+    .field input::placeholder { color: rgba(230,238,252,0.45); font-size: 14px; }
+    .field input:focus {
+      border-color: rgba(84,160,255,0.95);
+      box-shadow: 0 6px 18px rgba(46,101,255,0.08);
+    }
 
-  .input-wrap {
-    position: relative;
-  }
-  .clear-btn {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 18px; height: 18px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.12);
-    display:flex; align-items:center; justify-content:center;
-    cursor: pointer;
-  }
-  .clear-btn:before {
-    content: '×';
-    color: #fff;
-    font-size: 14px;
-    line-height: 1;
-  }
-    </style>
+    /* small clear button inside each input */
+    .clear-btn {
+      position: absolute;
+      right: 10px;
+      height: 30px;
+      width: 30px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.03);
+      cursor: pointer;
+      transition: transform .12s ease, background .12s ease;
+      color: rgba(255,255,255,0.7);
+      font-weight: 600;
+      font-size: 16px;
+    }
+    .clear-btn:hover { transform: scale(1.05); background: rgba(255,255,255,0.04); }
 
-<style>
-html, body {
-  height: 100%;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-}
-body {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
+    /* Play button (floating circle) */
+    .play-wrap {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 6px;
+    }
+    .play-btn {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(180deg,#2f83ff, #0f61e6);
+      box-shadow: 0 8px 30px rgba(15,97,230,0.28), 0 2px 8px rgba(0,0,0,0.6);
+      border: none;
+      cursor: pointer;
+      transition: transform .12s ease, box-shadow .18s ease, opacity .2s ease;
+      outline: none;
+    }
+    .play-btn:hover { transform: translateY(-4px); }
+    .play-btn:active { transform: translateY(-2px); }
+    .play-btn .triangle {
+      width: 0;
+      height: 0;
+      border-left: 18px solid #fff;
+      border-top: 11px solid transparent;
+      border-bottom: 11px solid transparent;
+      margin-left: 4px;
+    }
+    .play-btn.pulse {
+      animation: pulseGlow 1.8s infinite;
+    }
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 8px 30px rgba(15,97,230,0.28), 0 0 0 0 rgba(46,101,255,0.0); transform: translateY(0); }
+      50% { box-shadow: 0 10px 40px rgba(15,97,230,0.32), 0 0 30px 8px rgba(46,101,255,0.05); transform: translateY(-3px); }
+      100% { box-shadow: 0 8px 30px rgba(15,97,230,0.28), 0 0 0 0 rgba(46,101,255,0.0); transform: translateY(0); }
+    }
 
-/* Toggle switch styling */
-.switch-toggle {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  width: 60px;
-  height: 30px;
-  background: #1e90ff;
-  border-radius: 30px;
-  cursor: pointer;
-  transition: background 0.3s ease;
-  display: flex;
-  align-items: center;
-  padding: 4px;
-  z-index: 9999;
-}
-.switch-circle {
-  width: 22px;
-  height: 22px;
-  background: white;
-  border-radius: 50%;
-  transition: transform 0.3s ease;
-}
-.switch-toggle.active {
-  background: #e50914;
-}
-.switch-toggle.active .switch-circle {
-  transform: translateX(30px);
-}
-</style>
+    /* Back button (circle with arrow) - shown only during playback */
+    .back-btn {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      z-index: 9999;
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.06);
+      transition: opacity .28s ease, transform .18s ease;
+      cursor: pointer;
+      color: #fff;
+      font-size: 18px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+      opacity: 1;
+    }
+    .back-btn.hidden { opacity: 0; transform: scale(.92); pointer-events: none; }
+    .back-btn svg { width: 18px; height: 18px; }
 
+    /* Hide central play overlay of shaka (if any) while playing */
+    .playing .shaka-big-play-button { display: none !important; }
 
-<style>
-.switch-toggle {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  width: 60px;
-  height: 30px;
-  background: #1e90ff;
-  border-radius: 30px;
-  cursor: pointer;
-  transition: background 0.3s ease;
-  display: flex;
-  align-items: center;
-  padding: 4px;
-  z-index: 999999; /* ensure visibility over all elements */
-}
-.switch-circle {
-  width: 22px;
-  height: 22px;
-  background: white;
-  border-radius: 50%;
-  transition: transform 0.3s ease;
-}
-.switch-toggle.active {
-  background: #e50914;
-}
-.switch-toggle.active .switch-circle {
-  transform: translateX(30px);
-}
-</style>
-
+    /* Responsive */
+    @media (max-width: 480px) {
+      .panel { padding: 16px; max-width: 94%; }
+      .play-btn { width: 62px; height: 62px; }
+      .play-btn .triangle { border-left-width: 16px; }
+    }
+  </style>
 </head>
+
 <body>
-<!-- GUI (shown first) -->
-<div class="gui-wrap" id="guiWrap">
-<div aria-label="stream form" class="gui" role="form">
-<h2>Media Stream URL</h2>
-<div class="input-wrap"><input autocomplete="off" class="input" id="mediaUrl" placeholder="Media Stream URL (e.g. https://.../index.m3u8 or .mpd)" type="url"/><div class="clear-btn" data-target="mediaUrl"></div></div>
-<h2>Cookie Value</h2>
-<div class="input-wrap"><input autocomplete="off" class="input" id="cookieVal" placeholder="Cookie header (e.g. cookieName=value; ...)" type="text"/><div class="clear-btn" data-target="cookieVal"></div></div>
-<h2>Referer Value</h2>
-<div class="input-wrap"><input autocomplete="off" class="input" id="refererVal" placeholder="Referer (optional)" type="text"/><div class="clear-btn" data-target="refererVal"></div></div>
-<h2>Origin Value</h2>
-<div class="input-wrap"><input autocomplete="off" class="input" id="originVal" placeholder="Origin (optional)" type="text"/><div class="clear-btn" data-target="originVal"></div></div>
-<h2>DRM License URL</h2>
-<div class="input-wrap"><input autocomplete="off" class="input" id="licenseUrl" placeholder="DRM license URL (optional)" type="url"/><div class="clear-btn" data-target="licenseUrl"></div></div>
-<div class="two-col">
-<div style="flex:1;">
-<h2>Clear Key ID</h2>
-<div class="input-wrap"><input autocomplete="off" class="input" id="clearKid" placeholder="ENTER KID (hex/base64?)" type="text"/><div class="clear-btn" data-target="clearKid"></div></div>
-</div>
-<div style="flex:1;">
-<h2>Clear Key Key</h2>
-<div class="input-wrap"><input autocomplete="off" class="input" id="clearKey" placeholder="ENTER KEY" type="text"/><div class="clear-btn" data-target="clearKey"></div></div>
-</div>
-</div>
-<div class="small">Paste the values above and press the play button at bottom-right. The player will start after an interactive loader.</div>
-</div>
-</div>
-<!-- Player container (hidden until play) -->
-<div class="player-container" id="playerContainer" style="display:none;">
-<button class="back-btn" id="backBtn">
-<svg fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-<path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-</svg>
-</button>
 
-<div class="header" id="header"><div class="channel-name">LIVE TV</div></div>
-<video controls="" id="video" playsinline="" webkit-playsinline=""></video>
-</div>
-<!-- Modern minimal loading overlay -->
-<div aria-hidden="true" class="loading-overlay" id="loadingOverlay">
-<div class="loading-bg"></div>
-<div aria-live="polite" class="loader-card" role="status">
-<div class="loader-visual">
-<div class="ring"></div>
-</div>
-<div class="loader-texts">
-<div class="step" id="step1">Preparing your stream...</div>
-<div class="step" id="step2">Initializing DRM (if present)...</div>
-<div class="step" id="step3">Fetching video chunks...</div>
-<div class="step" id="step4">Almost there 🚀</div>
-<div class="substep" id="loaderSub" style="margin-top:8px;">This may take a few seconds on mobile.</div>
-<div class="loader-footer">Tip: If loading gets stuck, try opening in external browser.</div>
-</div>
-</div>
-</div>
-<!-- Floating Play button -->
-<button class="play-fab" id="playBtn" title="Play">
-<div class="play-triangle"></div>
-</button>
-<script>
-    /***** Player-vars (will be updated from GUI) *****/
-    let channelData = {
-      name: "live tv",
-      logo: "ENTER PNG LINK",
-      manifest_uri: "ENTER MANIFEST URL",   // updated from GUI
-      group: "Entertainment",
-      clear_key_id: "ENTER KID",           // updated from GUI
-      clear_key_key: "ENTER KEY",          // updated from GUI
-      user_agent: "plaYtv/7.1.3 (Linux;Android 13) ygx/69.1 ExoPlayerLib/824.0",
-      cookie: { cookie: "ENTER COOKIE" },
-      key: "LIVE TV"
-    };
-    let streamUrl = 'ENTER STREAMING URL';
+  <!-- Chrome Only Modal -->
+  <div id="chromeModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-content">
+      <h2>Please Open in Chrome</h2>
+      <p>This site is optimized for <strong>Google Chrome</strong>. Please open the link in Chrome browser for the best experience.</p>
+    </div>
+  </div>
 
-    const tg = window.Telegram?.WebApp;
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  <!-- GUI overlay (initially visible) -->
+  <div id="gui" class="gui" aria-hidden="false">
+    <div class="panel" role="region" aria-label="Player setup">
+      <div>
+        <div class="title">Stream Setup</div>
+        <div class="sub">Enter values and press Play to start the video</div>
+      </div>
 
-    let player = null;
-    let hlsPlayer = null;
-    let loadingTimeout = null;
-    let hideControlsTimeout = null;
+      <div class="field">
+        <input id="streamInput" type="text" placeholder="Media Stream URL (e.g. https://.../manifest.mpd)" autocomplete="off">
+        <div class="clear-btn" data-target="streamInput" title="Clear">×</div>
+      </div>
 
-    // Utility: show/hide loading overlay
-    function showLoadingOverlay(show) {
-      const overlay = document.getElementById('loadingOverlay');
-      if (!overlay) return;
-      overlay.style.display = show ? 'flex' : 'none';
-      overlay.setAttribute('aria-hidden', show ? 'false' : 'true');
-    }
+      <div class="field">
+        <input id="cookieInput" type="text" placeholder="Cookie Value (e.g. token=...)" autocomplete="off">
+        <div class="clear-btn" data-target="cookieInput" title="Clear">×</div>
+      </div>
 
-    function showError(message, title='Playback Error') {
-      showLoadingOverlay(false);
-      const errorDiv = document.createElement('div');
-      errorDiv.className = 'error-message';
-      errorDiv.innerHTML = '<div style="font-weight:700;margin-bottom:6px;">'+title+'</div><div>'+message+'</div>';
-      document.body.appendChild(errorDiv);
-      setTimeout(()=>{ errorDiv.remove(); },8000);
-    }
+      <div class="field">
+        <input id="refererInput" type="text" placeholder="Referer Value (e.g. https://example.com)" autocomplete="off">
+        <div class="clear-btn" data-target="refererInput" title="Clear">×</div>
+      </div>
 
-    function updateLoadingStep(index) {
-      // reveal steps sequentially (1-4)
-      for (let i=1;i<=4;i++){
-        const el = document.getElementById('step'+i);
-        if (!el) continue;
-        if (i <= index) el.classList.add('visible'); else el.classList.remove('visible');
+      <div class="field">
+        <input id="originInput" type="text" placeholder="Origin Value (e.g. https://example.com)" autocomplete="off">
+        <div class="clear-btn" data-target="originInput" title="Clear">×</div>
+      </div>
+
+      <div class="field">
+        <input id="drmInput" type="text" placeholder="DRM License (format: KID:KEY)" autocomplete="off">
+        <div class="clear-btn" data-target="drmInput" title="Clear">×</div>
+      </div>
+
+      <div class="play-wrap">
+        <button id="playBtn" class="play-btn pulse" aria-label="Play">
+          <span class="triangle"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Back button - only visible during playback (top-left) -->
+  <button id="backBtn" class="back-btn hidden" title="Back to setup" aria-label="Back to setup">
+    <!-- left arrow icon (SVG) -->
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 18 9 12 15 6"></polyline>
+    </svg>
+  </button>
+
+  <!-- Video container (existing) -->
+  <div id="videoContainer" class="shaka-video-container" data-shaka-player>
+    <video id="video" autoplay playsinline preload="metadata" poster=""></video>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      /********** Chrome check (kept) **********/
+      const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+      if (!isChrome) {
+        const chromeModal = document.getElementById('chromeModal');
+        chromeModal.classList.remove('hidden');
+        chromeModal.setAttribute('aria-hidden', 'false');
+        return; // block video setup in non-Chrome
       }
-    }
 
-    // Detect stream type
-    function detectStreamType(url) {
-      if (!url) return 'unknown';
-      const u = url.toLowerCase();
-      if (u.includes('.m3u8')) return 'hls';
-      if (u.includes('.mpd')) return 'dash';
-      return 'unknown';
-    }
+      /********** Keep original shaka initialization **********/
+      shaka.polyfill.installAll();
 
-    // Initialize player (uses global channelData and streamUrl)
-    async function initializePlayer() {
-      try {
-        showLoadingOverlay(true);
-        updateLoadingStep(1);
-        updateLoadingSubtext('Detecting stream format...');
+      if (!shaka.Player.isBrowserSupported()) {
+        console.error('Browser not supported');
+      } else {
+        // Elements
         const video = document.getElementById('video');
-        const streamType = detectStreamType(streamUrl);
+        const container = document.getElementById('videoContainer');
 
-        // set timeout if taking too long
-        loadingTimeout = setTimeout(()=>{
-          showError('Stream is taking longer than expected. Try external player or refresh.','Loading Timeout');
-        }, 240000);
+        // GUI elements
+        const gui = document.getElementById('gui');
+        const playBtn = document.getElementById('playBtn');
+        const backBtn = document.getElementById('backBtn');
 
-        // iOS tweaks
-        if (isIOS) {
-          video.setAttribute('webkit-playsinline','true');
-          video.setAttribute('playsinline','true');
-          video.muted = true;
-          video.autoplay = false;
-        }
+        // Inputs
+        const streamInput = document.getElementById('streamInput');
+        const cookieInput = document.getElementById('cookieInput');
+        const refererInput = document.getElementById('refererInput');
+        const originInput = document.getElementById('originInput');
+        const drmInput = document.getElementById('drmInput');
 
-        // Update steps for UI
-        updateLoadingStep(2);
-        updateLoadingSubtext('Configuring player (DRM if provided)...');
-
-        // If HLS and supported via hls.js (non-safari)
-        if (streamType === 'hls' && typeof Hls !== 'undefined' && Hls.isSupported() && !isSafari) {
-          updateLoadingStep(3);
-          const hlsConfig = { enableWorker:true, lowLatencyMode:true, backBufferLength: 30 };
-          hlsPlayer = new Hls(hlsConfig);
-
-          // Add cookie/referrer/origin via loader (hls's xhrSetup)
-          hlsPlayer.config.xhrSetup = function(xhr, url) {
-            // cookie
-            if (channelData.cookie && channelData.cookie.cookie) {
-              xhr.setRequestHeader('Cookie', channelData.cookie.cookie);
-            }
-            if (channelData.user_agent) {
-              try { xhr.setRequestHeader('User-Agent', channelData.user_agent); } catch(e) {}
-            }
-            if (channelData.referer) xhr.setRequestHeader('Referer', channelData.referer);
-            if (channelData.origin) xhr.setRequestHeader('Origin', channelData.origin);
-          };
-
-          hlsPlayer.loadSource(streamUrl);
-          hlsPlayer.attachMedia(video);
-
-          hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
-            clearTimeout(loadingTimeout);
-            updateLoadingStep(4);
-            updateLoadingSubtext('Starting playback...');
-            showLoadingOverlay(false);
-            if (isIOS) showIOSPlayButton();
-            else {
-              video.play().catch(e => { console.log('autoplay prevented',e); showIOSPlayButton(); });
-            }
+        // Wire clear buttons
+        document.querySelectorAll('.clear-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const id = btn.getAttribute('data-target');
+            const el = document.getElementById(id);
+            if (el) el.value = '';
           });
+        });
 
-          hlsPlayer.on(Hls.Events.ERROR, (event, data) => {
-            console.error('HLS error', data);
-            if (data.fatal) fallbackToNativePlayback();
-          });
+        // Shaka Player & UI
+        const player = new shaka.Player();
+        await player.attach(video);
 
-        } else if (channelData.clear_key_id && channelData.clear_key_key && typeof shaka !== 'undefined' && shaka.Player.isBrowserSupported()) {
-          // Use Shaka for DASH/DRM or clear keys
-          updateLoadingStep(3);
-          player = new shaka.Player(video);
-          player.configure({
-            streaming: { bufferingGoal: 30, rebufferingGoal: 15, bufferBehind: 30 },
-            drm: { clearKeys: { [channelData.clear_key_id]: channelData.clear_key_key } }
-          });
-
-          // request filter for cookies, referer, origin, user-agent
-          player.getNetworkingEngine().registerRequestFilter((type, request) => {
-            if (type === shaka.net.NetworkingEngine.RequestType.MANIFEST ||
-                type === shaka.net.NetworkingEngine.RequestType.SEGMENT) {
-              if (channelData.cookie && channelData.cookie.cookie) {
-                if (!request.uris.some(u => u.includes(channelData.cookie.cookie))) {
-                  request.uris = request.uris.map(uri => uri.includes('?') ? uri + '&' + channelData.cookie.cookie : uri + '?' + channelData.cookie.cookie);
-                }
-              }
-              if (channelData.user_agent) request.headers['User-Agent'] = channelData.user_agent;
-              if (channelData.referer) request.headers['Referer'] = channelData.referer;
-              if (channelData.origin) request.headers['Origin'] = channelData.origin;
-            }
-          });
-
-          player.addEventListener('error', (e) => { console.error('Shaka error', e); fallbackToNativePlayback(); });
-
-          await player.load(streamUrl);
-          clearTimeout(loadingTimeout);
-          updateLoadingStep(4);
-          updateLoadingSubtext('Starting playback...');
-          showLoadingOverlay(false);
-          if (isIOS) showIOSPlayButton(); else video.play().catch(e => { console.log('play prevented', e); showIOSPlayButton(); });
-
-        } else {
-          fallbackToNativePlayback();
-        }
-
-        // Standard video listeners
-        video.addEventListener('canplay', () => {
-          clearTimeout(loadingTimeout);
-          showLoadingOverlay(false);
-          if (!isIOS && video.paused) {
-            video.play().catch(e => { console.log('auto prevented',e); showIOSPlayButton(); });
+        const ui = new shaka.ui.Overlay(player, container, video);
+        ui.configure({
+          controlPanelElements: [
+            'play_pause', 'time_and_duration', 'mute', 'volume',
+            'spacer', 'language', 'captions', 'picture_in_picture',
+            'quality', 'fullscreen'
+          ],
+          volumeBarColors: {
+            base: 'rgba(63, 187, 1, 1)',
+            level: 'rgb(255, 69, 0)'
+          },
+          seekBarColors: {
+            base: 'rgb(41, 41, 163)',
+            buffered: 'rgb(35, 99, 3)',
+            played: 'rgba(63, 187, 1, 1)'
           }
         });
-        video.addEventListener('error', (e) => {
-          clearTimeout(loadingTimeout);
-          console.error('Video element error', e);
-          showError('Failed to load video stream. Try external player or refresh.','Video Error');
+
+        // Default placeholders that will be replaced when user provides inputs
+        let streamUrl = "ENTER STREAMING URL";
+        let cookieHeader = "ENTER COOKIE";
+        let refererHeader = "https://www.jiotv.com/";
+        let originHeader = "";
+        let drmConfig = { clearKeys: { "ENTER KID": "ENTER KEY" } };
+
+        // Networking filter uses current variables (they'll be updated before load)
+        player.getNetworkingEngine().registerRequestFilter((type, request) => {
+          // Set headers if provided (use fallback to existing values)
+          if (refererHeader) request.headers['Referer'] = refererHeader;
+          if (originHeader) request.headers['Origin'] = originHeader;
+          if (cookieHeader) request.headers['Cookie'] = cookieHeader;
+
+          // For manifest/segments, also append cookie to URL if required by some streams
+          if (
+            (type === shaka.net.NetworkingEngine.RequestType.MANIFEST ||
+             type === shaka.net.NetworkingEngine.RequestType.SEGMENT) &&
+            request.uris && request.uris[0] && !request.uris[0].includes('__hdnea__=')
+          ) {
+            const separator = request.uris[0].includes('?') ? '&' : '?';
+            // only append cookie when cookie looks like a query param (contains '=')
+            if (cookieHeader && cookieHeader.includes('=')) {
+              request.uris[0] += separator + cookieHeader;
+            }
+          }
         });
 
-      } catch (err) {
-        clearTimeout(loadingTimeout);
-        console.error('initializePlayer err', err);
-        showError('Failed to initialize player.','Initialization Error');
-      }
-    }
+        // Helper: parse DRM input "KID:KEY" (if multiple pairs, allow comma separated)
+        function parseDrmInput(text) {
+          const map = {};
+          if (!text) return map;
+          // allow multiple separated by comma or semicolon or space
+          const pairs = text.split(/[,;|\n]+/).map(s => s.trim()).filter(Boolean);
+          for (const p of pairs) {
+            const idx = p.indexOf(':');
+            if (idx > -1) {
+              const kid = p.slice(0, idx).trim();
+              const key = p.slice(idx + 1).trim();
+              if (kid && key) {
+                map[kid] = key;
+              }
+            }
+          }
+          return map;
+        }
 
-    function fallbackToNativePlayback() {
-      updateLoadingSubtext('Using native playback...');
-      const video = document.getElementById('video');
-      // cleanup
-      if (hlsPlayer) { try { hlsPlayer.destroy(); } catch(e){} hlsPlayer = null; }
-      if (player) { try{ player.destroy(); } catch(e){} player = null; }
-      video.src = streamUrl;
-      video.load();
-      clearTimeout(loadingTimeout);
-      updateLoadingStep(4);
-      showLoadingOverlay(false);
-      if (isIOS) showIOSPlayButton(); else video.play().catch(e=>{ console.log('play prevented', e); showIOSPlayButton(); });
-    }
+        // Play logic - apply values then load
+        async function startPlayback() {
+          // read inputs (preserve values)
+          const s = streamInput.value.trim();
+          const c = cookieInput.value.trim();
+          const r = refererInput.value.trim();
+          const o = originInput.value.trim();
+          const d = drmInput.value.trim();
 
-    // iOS play overlay
-    function showIOSPlayButton() {
-      if (document.getElementById('iosPlayButton')) return;
-      const div = document.createElement('div');
-      div.id = 'iosPlayButton';
-      Object.assign(div.style, {
-        position: 'absolute', zIndex: 250, left: '50%', top: '50%', transform: 'translate(-50%,-50%)',
-        width:'88px', height:'88px', borderRadius:'50%', background:'rgba(0,0,0,0.6)', display:'flex', alignItems:'center', justifyContent:'center', border:'2px solid #fff', cursor:'pointer'
-      });
-      const tri = document.createElement('div');
-      Object.assign(tri.style, {
-        width:'0', height:'0', borderLeft:'26px solid #fff', borderTop:'16px solid transparent', borderBottom:'16px solid transparent', marginLeft:'6px'
-      });
-      div.appendChild(tri);
-      div.addEventListener('click', ()=>{
-        const video = document.getElementById('video');
-        video.muted = false;
-        video.play().then(()=>{ hideIOSPlayButton(); }).catch(err=>{
-          console.error('ios play failed', err);
-          video.muted = true;
-          video.play().then(()=>{ hideIOSPlayButton(); });
+          if (s) streamUrl = s;
+          if (c) cookieHeader = c;
+          if (r) refererHeader = r;
+          if (o) originHeader = o;
+
+          // parse DRM
+          const clearMap = parseDrmInput(d);
+          if (Object.keys(clearMap).length > 0) {
+            drmConfig.clearKeys = clearMap;
+          }
+
+          // Apply DRM configuration and networking values
+          player.configure({
+            drm: drmConfig,
+            streaming: {
+              lowLatencyMode: true,
+              bufferingGoal: 15,
+              rebufferingGoal: 2,
+              bufferBehind: 15,
+              retryParameters: { timeout: 10000, maxAttempts: 5, baseDelay: 300, backoffFactor: 1.2 },
+              segmentRequestTimeout: 8000,
+              segmentPrefetchLimit: 2,
+              useNativeHlsOnSafari: true
+            },
+            manifest: { retryParameters: { timeout: 8000, maxAttempts: 3 } }
+          });
+
+          // Hide the GUI and enter full screen & start player
+          gui.classList.add('hidden');
+          document.body.classList.add('playing');
+
+          // Try to make fullscreen on the container
+          try {
+            if (container.requestFullscreen) {
+              await container.requestFullscreen();
+            } else if (container.webkitRequestFullscreen) {
+              container.webkitRequestFullscreen();
+            }
+          } catch (err) {
+            // ignore fullscreen errors
+            console.warn('Fullscreen request failed:', err);
+          }
+
+          // Load the stream. If load fails it will print to console.
+          try {
+            await player.load(streamUrl);
+            // hide the play pulse so central GUI isn't visible
+            playBtn.classList.remove('pulse');
+            // ensure video plays (autoplay might be blocked on some browsers)
+            await video.play().catch(e => { /* ignore play errors */ });
+            // Show back button and start auto-hide timer
+            showBackTemporarily();
+          } catch (err) {
+            console.error('Load error:', err);
+            // restore GUI on error
+            stopPlaybackAndShowGui();
+            alert('Failed to load stream. Check console for details.');
+          }
+        }
+
+        // Stop playback and show GUI (Back behavior)
+        async function stopPlaybackAndShowGui() {
+          try {
+            // stop player and detach
+            if (player) {
+              player.unload().catch(()=>{});
+            }
+          } catch(e) { console.warn(e); }
+
+          // exit fullscreen if in it
+          try {
+            if (document.fullscreenElement) {
+              await document.exitFullscreen();
+            } else if (document.webkitFullscreenElement) {
+              document.webkitExitFullscreen && document.webkitExitFullscreen();
+            }
+          } catch (err) { /* ignore */ }
+
+          // show GUI again
+          gui.classList.remove('hidden');
+          document.body.classList.remove('playing');
+          // keep values in inputs (we didn't clear them)
+          hideBackButton();
+        }
+
+        // Back button and auto-hide logic
+        let backTimer = null;
+        function showBackTemporarily() {
+          backBtn.classList.remove('hidden');
+          // clear previous timer
+          if (backTimer) { clearTimeout(backTimer); backTimer = null; }
+          backTimer = setTimeout(() => {
+            hideBackButton();
+          }, 10000); // hide after 10s
+        }
+        function hideBackButton() {
+          backBtn.classList.add('hidden');
+          if (backTimer) { clearTimeout(backTimer); backTimer = null; }
+        }
+
+        // Show back on pointermovement while playing
+        let pointerTimeout = null;
+        function onPointerActivityDuringPlayback() {
+          // only show when playing (GUI hidden)
+          if (!document.body.classList.contains('playing')) return;
+          backBtn.classList.remove('hidden');
+          if (pointerTimeout) clearTimeout(pointerTimeout);
+          pointerTimeout = setTimeout(() => {
+            // hide back button after 10s of inactivity
+            hideBackButton();
+          }, 10000);
+        }
+        // Attach global pointer/mousemove/touch listeners
+        ['mousemove','pointermove','touchstart','touchmove'].forEach(evt => {
+          document.addEventListener(evt, onPointerActivityDuringPlayback, { passive: true });
         });
-      });
-      document.body.appendChild(div);
-    }
-    function hideIOSPlayButton(){ const el = document.getElementById('iosPlayButton'); if(el) el.remove(); }
 
-    function updateLoadingSubtext(txt) {
-      const el = document.getElementById('loaderSub');
-      if (el) el.textContent = txt || '';
-    }
+        // Wire play / back button
+        playBtn.addEventListener('click', async (e) => {
+          // small UX: require stream url
+          if (!streamInput.value.trim()) {
+            alert('Please enter Media Stream URL.');
+            streamInput.focus();
+            return;
+          }
+          playBtn.disabled = true;
+          await startPlayback();
+          playBtn.disabled = false;
+        });
 
-    /* --- GUI -> apply values and start --- */
-    const playBtn = document.getElementById('playBtn');
-    playBtn.addEventListener('click', onPlayClicked);
+        backBtn.addEventListener('click', async (e) => {
+          await stopPlaybackAndShowGui();
+        });
 
-    function onPlayClicked() {
-      // read form values
-      const media = document.getElementById('mediaUrl').value.trim();
-      const cookie = document.getElementById('cookieVal').value.trim();
-      const referer = document.getElementById('refererVal').value.trim();
-      const origin = document.getElementById('originVal').value.trim();
-      const license = document.getElementById('licenseUrl').value.trim();
-      const kid = document.getElementById('clearKid').value.trim();
-      const key = document.getElementById('clearKey').value.trim();
+        // When user presses Esc (exit fullscreen), show GUI back if player is stopped:
+        document.addEventListener('fullscreenchange', () => {
+          if (!document.fullscreenElement && document.body.classList.contains('playing')) {
+            // Fullscreen exited but we are still in playing state — keep back button logic, or re-show GUI.
+            // We'll keep playing but show Back so user can actively return.
+            showBackTemporarily();
+          }
+        });
 
-      if (!media) {
-        showError('Please paste the Media Stream URL first (top field).','Missing URL');
-        return;
-      }
+        // If user interacts with the GUI inputs while file loaded previously, keep values (already done)
+        // (No further work required. Inputs keep values by default.)
 
-      // update channelData and streamUrl
-      channelData.manifest_uri = media;
-      streamUrl = media;
-      if (cookie) channelData.cookie.cookie = cookie; else channelData.cookie.cookie = "ENTER COOKIE";
-      if (referer) channelData.referer = referer;
-      if (origin) channelData.origin = origin;
-      if (license) channelData.license = license;
-      if (kid) channelData.clear_key_id = kid;
-      if (key) channelData.clear_key_key = key;
+        // Small: Hide big shaka overlay play buttons while playing
+        video.addEventListener('play', () => {
+          document.body.classList.add('playing');
+        });
+        video.addEventListener('pause', () => {
+          // do nothing
+        });
 
-      // hide GUI, show player & loader
-      document.getElementById('guiWrap').style.display = 'none';
-      document.getElementById('playerContainer').style.display = 'block';
-      showLoadingOverlay(true);
+        // make Enter key on any input trigger Play
+        [streamInput, cookieInput, refererInput, originInput, drmInput].forEach(inp => {
+          inp.addEventListener('keydown', (ev) => {
+            if (ev.key === 'Enter') {
+              ev.preventDefault();
+              playBtn.click();
+            }
+          });
+        });
 
-      // animate loader steps
-      updateLoadingStep(0);
-      updateLoadingSubtext('Starting...');
-      setTimeout(()=> updateLoadingStep(1), 350);
-      setTimeout(()=> updateLoadingStep(2), 900);
-      setTimeout(()=> updateLoadingStep(3), 1400);
-      setTimeout(()=> updateLoadingStep(4), 2100);
+        // On page load, you may want to prefill inputs with any default values read from code.
+        // For now we leave blank so user provides them.
 
-      // run initialize after small delay so loader shows
-      setTimeout(() => {
-        initializePlayer();
-      }, 1100);
-    }
-
-    // Small UX: show/hide header controls on interaction
-    function hideControls() { document.getElementById('header').classList.add('hidden'); }
-    function showControls() {
-      document.getElementById('header').classList.remove('hidden');
-      clearTimeout(hideControlsTimeout);
-      hideControlsTimeout = setTimeout(hideControls, 3000);
-    }
-    document.addEventListener('click', (e)=> {
-      if (!e.target.closest('#iosPlayButton')) showControls();
-    });
-    document.addEventListener('touchstart', (e)=> {
-      if (!e.target.closest('#iosPlayButton')) showControls();
-    });
-    setTimeout(hideControls, 3000);
-
-    // Telegram WebApp niceties (kept)
-    if (tg) {
-      tg.ready();
-      tg.expand();
-      tg.enableClosingConfirmation();
-      if (tg.setFullScreen) tg.setFullScreen(true);
-      if (tg.MainButton) tg.MainButton.hide();
-      if (tg.BackButton) tg.BackButton.hide();
-    }
-    window.addEventListener('orientationchange', ()=> { setTimeout(()=> { if(tg) { tg.expand(); if (tg.setFullScreen) tg.setFullScreen(true);} }, 500); });
-    window.addEventListener('resize', ()=> { if (tg) tg.expand(); });
-    window.addEventListener('focus', ()=> { if (tg && tg.setFullScreen) tg.setFullScreen(true); });
-
-    // cleanup
-    window.addEventListener('beforeunload', ()=> {
-      clearTimeout(loadingTimeout);
-      clearTimeout(hideControlsTimeout);
-      if (hlsPlayer) try { hlsPlayer.destroy(); } catch(e){}
-      if (player) try { player.destroy(); } catch(e){}
-    });
-  
-  // Clear buttons functionality
-  document.querySelectorAll('.clear-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const target = document.getElementById(btn.dataset.target);
-      if (target) target.value = '';
-    });
-  });
-
-  // Back button logic
-  const backBtn = document.getElementById('backBtn');
-  backBtn.addEventListener('click', () => {
-    document.getElementById('playerContainer').style.display = 'none';
-    document.getElementById('guiWrap').style.display = 'flex';
-    backBtn.classList.remove('visible');
-  });
-
-  // Hide play button after play
-  function hidePlayButton() {
-    document.getElementById('playBtn').style.display = 'none';
-  }
-
-  // Modify onPlayClicked
-  const origOnPlayClicked = onPlayClicked;
-  function onPlayClickedWrapper() {
-    origOnPlayClicked();
-    hidePlayButton();
-    backBtn.classList.remove('visible'); // start hidden
-  }
-  playBtn.removeEventListener('click', onPlayClicked);
-  playBtn.addEventListener('click', onPlayClickedWrapper);
-
-  // Show back button only on interaction
-  function showBackBtn() {
-    if (document.getElementById('playerContainer').style.display !== 'none') {
-      backBtn.classList.add('visible');
-      clearTimeout(hideControlsTimeout);
-      hideControlsTimeout = setTimeout(() => backBtn.classList.remove('visible'), 3000);
-    }
-  }
-  document.addEventListener('click', showBackBtn);
-  document.addEventListener('touchstart', showBackBtn);
-
-// --- Modernized enhancements ---
-
-// Show/hide back button on interaction or pause
-const videoEl = document.getElementById('video');
-
-function showBackButton() {
-  if (document.getElementById('playerContainer').style.display !== 'none') {
-    backBtn.classList.add('visible');
-    clearTimeout(hideControlsTimeout);
-    hideControlsTimeout = setTimeout(() => backBtn.classList.remove('visible'), 3000);
-  }
-}
-
-videoEl.addEventListener('pause', showBackButton);
-document.addEventListener('mousemove', showBackButton);
-document.addEventListener('touchstart', showBackButton);
-
-// Update back button logic to properly reset GUI & player
-backBtn.addEventListener('click', () => {
-  try {
-    if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
-    if (player) { player.destroy(); player = null; }
-    videoEl.pause();
-    videoEl.removeAttribute('src');
-    videoEl.load();
-  } catch (e) { console.warn('cleanup error', e); }
-
-  document.getElementById('playerContainer').style.display = 'none';
-  document.getElementById('guiWrap').style.display = 'flex';
-  document.getElementById('playBtn').style.display = 'flex';
-  backBtn.classList.remove('visible');
-});
-
-// Responsive design improvements
-window.addEventListener('resize', () => {
-  const gui = document.querySelector('.gui');
-  if (window.innerWidth > 768) {
-    gui.style.maxWidth = '520px';
-    gui.style.width = '100%';
-    gui.style.margin = 'auto';
-  } else {
-    gui.style.width = '94%';
-    gui.style.maxWidth = 'none';
-  }
-});
-
-// Add some smooth fade effects for GUI/player transitions
-document.getElementById('playerContainer').style.transition = 'opacity 0.4s ease';
-document.getElementById('guiWrap').style.transition = 'opacity 0.4s ease';
-
-// Improve back button appearance
-const style = document.createElement('style');
-style.innerHTML = `
-  .back-btn {
-    transition: opacity 0.4s ease, transform 0.3s ease;
-  }
-  .back-btn:hover {
-    transform: scale(1.08);
-    background: rgba(30, 144, 255, 0.6);
-  }
-  .player-container {
-    animation: fadeIn 0.4s ease;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; } to { opacity: 1; }
-  }
-`;
-document.head.appendChild(style);
-</script>
-
-
-<!-- 🔸 Toggle Switch Button (Go to new_player.html) -->
-<div class="switch-toggle" onclick="window.location.href='new_player.html'">
-  <div class="switch-circle"></div>
-</div>
-
-
-<!-- 🔸 Toggle Switch Button -->
-<div class="switch-toggle" onclick="window.location.href='new_player_with_toggle.html'">
-  <div class="switch-circle"></div>
-</div>
-
+      } // end shaka supported
+    }); // DOMContentLoaded
+  </script>
 </body>
 </html>
