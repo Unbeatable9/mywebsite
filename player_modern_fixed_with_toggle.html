@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sony liv</title>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.6.0/shaka-player.ui.min.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.6.0/controls.min.css" crossorigin="anonymous">
 
   <style>
     /* Reset & base */
@@ -238,6 +238,26 @@
       .play-btn { width: 62px; height: 62px; }
       .play-btn .triangle { border-left-width: 16px; }
     }
+
+    /* black overlay behind GUI */
+#bgMask{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;          /* solid black */
+  z-index: 9997;             /* ensure it's behind GUI elements but above page background */
+  transition: opacity .25s ease, visibility .25s ease;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: none;      /* allow clicks through to GUI if needed */
+}
+#bgMask.hidden{
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
   </style>
 </head>
 
@@ -250,6 +270,9 @@
       <p>This site is optimized for <strong>Google Chrome</strong>. Please open the link in Chrome browser for the best experience.</p>
     </div>
   </div>
+
+  <!-- Place this inside <body>, before your GUI markup -->
+  <div id="bgMask"></div>
 
   <!-- GUI overlay (initially visible) -->
   <div id="gui" class="gui" aria-hidden="false">
@@ -337,6 +360,18 @@
         const refererInput = document.getElementById('refererInput');
         const originInput = document.getElementById('originInput');
         const drmInput = document.getElementById('drmInput');
+        // Auto split combined input (URL|Cookie|DRM)
+
+        streamInput.addEventListener('input', () => {
+        const text = streamInput.value.trim();
+        // If it includes | separator, split automatically
+        if (text.includes('|')) {
+        const parts = text.split('|').map(p => p.trim());
+       if (parts[0]) streamInput.value = parts[0];
+       if (parts[1]) cookieInput.value = parts[1];
+       if (parts[2]) drmInput.value = parts[2];
+        }
+       });
 
         // Wire clear buttons
         document.querySelectorAll('.clear-btn').forEach(btn => {
@@ -595,5 +630,33 @@
       } // end shaka supported
     }); // DOMContentLoaded
   </script>
+
+  <script>
+(function(){
+  const mask = document.getElementById('bgMask');
+  if(!mask) return;
+
+  function hideOverlay(){ mask.classList.add('hidden'); }
+  function showOverlay(){ mask.classList.remove('hidden'); }
+
+  // 🔸 Jab video player visible ho (for example jab aapka <video> load/play ho)
+  const vid = document.querySelector('video');
+  if(vid){
+    vid.addEventListener('playing', hideOverlay);   // video start hone par overlay hatana
+  }
+
+  // 🔸 Jab back button dabake GUI par wapas aaye
+  const backBtn = document.querySelector('#backButton, .back-btn, [data-back]');
+  if(backBtn){
+    backBtn.addEventListener('click', () => {
+      showOverlay();
+    });
+  }
+
+  // 🔸 Initial load par black page dikhe
+  showOverlay();
+})();
+</script>
+
 </body>
 </html>
