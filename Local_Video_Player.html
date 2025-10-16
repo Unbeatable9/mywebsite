@@ -1,0 +1,2533 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>PLAYFLIX — Advanced Video Streaming Platform</title>
+
+  <!-- HLS & Shaka & YouTube API -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.0/shaka-player.compiled.min.js"></script>
+
+  <style>
+    /* Reset & Base */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(135deg, #0a0a0f 0%, #1a0a2e 50%, #16213e 100%);
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.05);
+      }
+    }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: -1000px 0;
+      }
+      100% {
+        background-position: 1000px 0;
+      }
+    }
+
+    @keyframes gearRotate {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Clear button animation */
+    @keyframes fadeInScale {
+      from {
+        opacity: 0;
+        transform: scale(0.5);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes rotateIn {
+      from {
+        transform: rotate(-90deg) scale(0.8);
+        opacity: 0;
+      }
+      to {
+        transform: rotate(0deg) scale(1);
+        opacity: 1;
+      }
+    }
+
+    /* Double tap animation */
+    @keyframes doubleTapFeedback {
+      0% {
+        opacity: 0;
+        transform: scale(0.5);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1.2);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+    }
+
+    /* Main Stage */
+    .stage {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Animated Background */
+    .stage::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(138, 43, 226, 0.1) 0%, transparent 70%);
+      animation: pulse 8s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    /* Landing Card */
+    .landing {
+      width: min(900px, 95%);
+      background: rgba(20, 20, 30, 0.8);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 50px 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 100px rgba(138, 43, 226, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      animation: fadeIn 0.6s ease-out;
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand {
+      background: linear-gradient(135deg, #8a2be2, #e50914);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 900;
+      font-size: 48px;
+      text-align: center;
+      margin-bottom: 20px;
+      letter-spacing: 2px;
+      animation: shimmer 3s infinite;
+      background-size: 1000px 100%;
+    }
+
+    .headline {
+      font-weight: 700;
+      font-size: 28px;
+      text-align: center;
+      margin-bottom: 15px;
+      color: #fff;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .sub {
+      color: rgba(255, 255, 255, 0.7);
+      text-align: center;
+      margin-bottom: 40px;
+      line-height: 1.6;
+      font-size: 15px;
+    }
+
+    .supported-formats {
+      background: rgba(138, 43, 226, 0.1);
+      border: 1px solid rgba(138, 43, 226, 0.3);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+
+    .supported-formats h3 {
+      font-size: 16px;
+      margin-bottom: 12px;
+      color: #8a2be2;
+    }
+
+    .format-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .format-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .format-item::before {
+      content: '✓';
+      color: #4ade80;
+      font-weight: bold;
+    }
+
+    .input-section {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      animation: slideInRight 0.7s ease-out;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    /* Updated input container for clear button */
+    .input-container {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .url-input {
+      flex: 1;
+      width: 100%;
+      padding: 16px 50px 16px 20px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(138, 43, 226, 0.3);
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    .url-input:focus {
+      border-color: #8a2be2;
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 20px rgba(138, 43, 226, 0.3);
+    }
+
+    .url-input::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    /* Clear button styling */
+    .clear-btn {
+      position: absolute;
+      right: 10px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(229, 9, 20, 0.8);
+      border: none;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      animation: fadeInScale 0.3s ease-out;
+      z-index: 10;
+    }
+
+    .clear-btn:hover {
+      background: rgba(229, 9, 20, 1);
+      transform: rotate(90deg) scale(1.1);
+    }
+
+    .clear-btn:active {
+      transform: rotate(90deg) scale(0.9);
+    }
+
+    .clear-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: #fff;
+      stroke-width: 2.5;
+    }
+
+    .clear-btn.show {
+      display: flex;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #8a2be2, #e50914);
+      color: #fff;
+      border: none;
+      padding: 16px 32px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 15px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    .btn:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(138, 43, 226, 0.4);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn.secondary {
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn.secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .info-text {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 10px;
+    }
+
+    /* Player Screen */
+    .player-screen {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      display: none;
+      z-index: 120;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .player-wrap {
+      width: 100%;
+      max-width: 100%;
+      height: 100vh;
+      background: #000;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    video#player {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+    }
+
+    iframe#ytPlayer {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #000;
+    }
+
+    /* Double tap zones */
+    .tap-zone {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 35%;
+      z-index: 8;
+      cursor: pointer;
+    }
+
+    .tap-zone-left {
+      left: 0;
+    }
+
+    .tap-zone-right {
+      right: 0;
+    }
+
+    /* Double tap feedback */
+    .tap-feedback {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+      z-index: 9;
+    }
+
+    .tap-feedback.left {
+      left: 15%;
+    }
+
+    .tap-feedback.right {
+      right: 15%;
+    }
+
+    .tap-feedback.show {
+      display: flex;
+      animation: doubleTapFeedback 0.6s ease-out;
+    }
+
+    .tap-feedback-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tap-feedback-icon svg {
+      width: 45px;
+      height: 45px;
+      fill: #000;
+    }
+
+    .tap-feedback-text {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+    }
+
+    /* Top Bar */
+    .player-top {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      padding: 20px 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.8), transparent);
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 10;
+    }
+
+    .player-top > * {
+      pointer-events: auto;
+    }
+
+    .title {
+      color: #fff;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+    }
+
+    .back-btn {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      cursor: pointer;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 10px 16px;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .back-btn:hover {
+      background: rgba(0, 0, 0, 0.7);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateX(-3px);
+    }
+
+    /* Controls */
+    .controls {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 20px 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: linear-gradient(0deg, rgba(0, 0, 0, 0.9), transparent);
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 10;
+    }
+
+    .controls > * {
+      pointer-events: auto;
+    }
+
+    .controls-row {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .control-btn {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      min-width: 40px;
+      min-height: 40px;
+    }
+
+    .control-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1);
+    }
+
+    .control-btn:active {
+      transform: scale(0.95);
+    }
+
+    .control-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: #fff;
+    }
+
+    .time {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 600;
+      min-width: 110px;
+      text-align: center;
+    }
+
+    /* Seek Bar */
+    .seek {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      appearance: none;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .seek:hover {
+      height: 10px;
+    }
+
+    .seek::-webkit-slider-thumb {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #8a2be2, #e50914);
+      border: 2px solid #fff;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      transition: all 0.3s ease;
+    }
+
+    .seek::-webkit-slider-thumb:hover {
+      transform: scale(1.3);
+    }
+
+    .volume-range {
+      width: 100px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+      appearance: none;
+      cursor: pointer;
+    }
+
+    .volume-range::-webkit-slider-thumb {
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #fff;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Center Overlay */
+    .center-overlay {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+      flex-direction: column;
+      gap: 15px;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .overlay-play {
+      pointer-events: auto;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(138, 43, 226, 0.8);
+      backdrop-filter: blur(10px);
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .overlay-play:hover {
+      background: rgba(138, 43, 226, 1);
+      border-color: rgba(255, 255, 255, 0.5);
+      transform: scale(1.1);
+    }
+
+    .overlay-play svg {
+      width: 42px;
+      height: 42px;
+      fill: #fff;
+      margin-left: 4px;
+    }
+
+    /* Loader */
+    .loader {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 80;
+      width: 100px;
+      height: 100px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      border-radius: 15px;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 4px solid rgba(255, 255, 255, 0.2);
+      border-top-color: #8a2be2;
+      animation: spin 1s linear infinite;
+    }
+
+    /* Error Box */
+    .error-box {
+      position: absolute;
+      left: 50%;
+      top: 25%;
+      transform: translateX(-50%);
+      background: rgba(229, 9, 20, 0.95);
+      backdrop-filter: blur(10px);
+      color: #fff;
+      padding: 18px 24px;
+      border-radius: 12px;
+      z-index: 200;
+      display: none;
+      font-weight: 600;
+      box-shadow: 0 10px 40px rgba(229, 9, 20, 0.5);
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    /* Settings Menu */
+    .menu-panel {
+      position: absolute;
+      right: 30px;
+      bottom: 90px;
+      background: rgba(10, 10, 20, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 15px;
+      width: 320px;
+      display: none;
+      z-index: 220;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .menu-panel h4 {
+      font-size: 16px;
+      margin-bottom: 15px;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .menu-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+
+    .select {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 8px;
+      width: 100%;
+      outline: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .select:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .select option {
+      background: #1a1a2e;
+      color: #fff;
+    }
+
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toggle input[type="checkbox"] {
+      width: 50px;
+      height: 26px;
+      appearance: none;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 13px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .toggle input[type="checkbox"]:checked {
+      background: linear-gradient(135deg, #8a2be2, #e50914);
+    }
+
+    .toggle input[type="checkbox"]::before {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #fff;
+      top: 3px;
+      left: 3px;
+      transition: all 0.3s ease;
+    }
+
+    .toggle input[type="checkbox"]:checked::before {
+      left: 27px;
+    }
+
+    .small {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    /* Top Right Actions */
+    .top-right-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .icon-btn {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .icon-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Speed Control - HIDDEN as per user request */
+    .speed-display {
+      display: none !important;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .landing {
+        padding: 35px 25px;
+      }
+
+      .brand {
+        font-size: 36px;
+      }
+
+      .headline {
+        font-size: 22px;
+      }
+
+      .sub {
+        font-size: 14px;
+      }
+
+      .input-row {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+
+      .player-wrap {
+        height: 100vh;
+      }
+
+      .volume-range {
+        display: none;
+      }
+
+      .menu-panel {
+        width: 280px;
+        right: 15px;
+        bottom: 70px;
+      }
+
+      .controls {
+        padding: 15px 15px;
+      }
+
+      .player-top {
+        padding: 15px 15px;
+      }
+
+      .time {
+        font-size: 12px;
+        min-width: 90px;
+      }
+
+      .speed-display {
+        display: none !important;
+      }
+
+      .format-list {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      }
+    }
+
+    @media (max-width: 480px) {
+      .brand {
+        font-size: 28px;
+      }
+
+      .headline {
+        font-size: 18px;
+      }
+
+      .controls-row {
+        gap: 8px;
+      }
+
+      .control-btn {
+        min-width: 35px;
+        min-height: 35px;
+        padding: 8px;
+      }
+
+      .control-btn svg {
+        width: 16px;
+        height: 16px;
+      }
+    }
+
+    /* Hide controls class */
+    .hide-controls .controls,
+    .hide-controls .player-top {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .yt-player-mode .controls {
+      display: none;
+    }
+  
+    /* New Control Panel Options */
+    .speed-option, .quality-option, .audio-option, .caption-option {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin: 5px;
+      font-size: 14px;
+      flex: 1;
+      min-width: 80px;
+      text-align: center;
+    }
+
+    .speed-option:hover, .quality-option:hover, .audio-option:hover, .caption-option:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(138, 43, 226, 0.5);
+    }
+
+    .speed-option.selected, .quality-option.selected, .audio-option.selected, .caption-option.selected {
+      background: linear-gradient(135deg, rgba(138, 43, 226, 0.6), rgba(229, 9, 20, 0.6));
+      border-color: rgba(138, 43, 226, 0.8);
+    }
+
+    .menu-row {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+  </style>
+</head>
+<body>
+  <main class="stage">
+    <!-- Landing -->
+    <section class="landing" id="home">
+      <div class="brand">PLAYFLIX</div>
+      <div class="headline">Ultimate Video Streaming Platform</div>
+      <div class="sub">Stream all types of videos — YouTube, Vimeo, HLS, DASH, MP4 or local files. Ultra-fast loading with zero buffering experience.</div>
+
+      <div class="supported-formats">
+        <h3>✨ Supported Formats & URLs</h3>
+        <div class="format-list">
+          <div class="format-item">YouTube URLs</div>
+          <div class="format-item">Vimeo URLs</div>
+          <div class="format-item">HLS (.m3u8)</div>
+          <div class="format-item">DASH (.mpd)</div>
+          <div class="format-item">MP4 Files</div>
+          <div class="format-item">WebM Files</div>
+          <div class="format-item">AVI Files</div>
+          <div class="format-item">MOV Files</div>
+          <div class="format-item">MKV Files</div>
+          <div class="format-item">FLV Files</div>
+          <div class="format-item">WMV Files</div>
+          <div class="format-item">All Video Formats</div>
+        </div>
+      </div>
+
+      <div class="input-section">
+        <div class="info-text">
+          <span>Paste Video URL or choose local file</span>
+          <span>All formats supported ✓</span>
+        </div>
+
+        <div class="input-row">
+          <div class="input-container">
+            <input id="inputUrl" class="url-input" placeholder="YouTube, Vimeo, HLS, MP4... paste any video URL here" />
+            <button class="clear-btn" id="clearBtn" title="Clear">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+          <button id="playLinkBtn" class="btn">Play Video</button>
+        </div>
+
+        <div class="input-row">
+          <input id="filePicker" type="file" accept="video/*,audio/*,.mkv,.avi,.flv,.wmv,.m3u8,.mpd" style="display:none" />
+          <label for="filePicker" class="btn secondary" style="width: 100%; text-align: center;">📁 Choose Local File (All Formats)</label>
+        </div>
+      </div>
+    </section>
+
+    <!-- Player Screen -->
+    <section class="player-screen" id="playerScreen" aria-hidden="true">
+      <div class="player-wrap" id="playerWrap">
+        <video id="player" playsinline webkit-playsinline preload="auto"></video>
+        <iframe id="ytPlayer" style="display:none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+        <!-- Double Tap Zones -->
+        <div class="tap-zone tap-zone-left" id="tapZoneLeft"></div>
+        <div class="tap-zone tap-zone-right" id="tapZoneRight"></div>
+
+        <!-- Double Tap Feedback -->
+        <div class="tap-feedback left" id="tapFeedbackLeft">
+          <div class="tap-feedback-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M11 17l-5-5 5-5v10z"/>
+              <path d="M18 17l-5-5 5-5v10z"/>
+            </svg>
+          </div>
+          <div class="tap-feedback-text">-10s</div>
+        </div>
+        <div class="tap-feedback right" id="tapFeedbackRight">
+          <div class="tap-feedback-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M13 7l5 5-5 5V7z"/>
+              <path d="M6 7l5 5-5 5V7z"/>
+            </svg>
+          </div>
+          <div class="tap-feedback-text">+10s</div>
+        </div>
+
+        <!-- Top Bar -->
+        <div class="player-top">
+          <div style="display:flex;gap:12px;align-items:center">
+            <div class="back-btn" id="backToHome">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" style="stroke:#fff;stroke-width:2">
+                <path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Back
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="title" id="videoTitle">PLAYFLIX</div>
+            <div class="top-right-actions">
+              <div class="icon-btn" id="pipBtn" title="Picture-in-Picture">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <rect x="13" y="13" width="6" height="6" rx="1"/>
+                </svg>
+              </div>
+              <div class="icon-btn" id="downloadBtn" title="Download">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="1.5">
+                  <path d="M12 3v12"/><path d="M5 12l7 7 7-7"/><path d="M5 21h14"/>
+                </svg>
+              </div>
+              <div class="icon-btn" id="shareBtn" title="Share">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="1.5">
+                  <path d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7"/>
+                  <path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Center Overlay -->
+        <div class="center-overlay" id="centerOverlay" style="display:none;pointer-events:none">
+          <div class="overlay-play" id="overlayPlayBtn" title="Play/Pause" style="pointer-events:auto">
+            <svg viewBox="0 0 24 24"><path d="M5 3v18l15-9L5 3z"/></svg>
+          </div>
+        </div>
+
+        <div class="loader" id="loader"><div class="spinner"></div></div>
+        <div class="error-box" id="errorBox">Playback failed</div>
+
+        <!-- Settings Panel -->
+        <div class="menu-panel" id="menuPanel" role="dialog" aria-hidden="true">
+          <h4>⚙️ Playback Settings</h4>
+
+          <div class="menu-row">
+            <div style="width:100%">
+              <div class="small">Quality</div>
+              <select id="qualitySelect" class="select">
+                <option value="auto">Auto (adaptive)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="menu-row">
+            <div style="width:100%">
+              <div class="small">Playback Speed</div>
+              <select id="speedSelect" class="select">
+                <option value="0.25">0.25x</option>
+                <option value="0.5">0.5x</option>
+                <option value="0.75">0.75x</option>
+                <option value="1" selected>Normal (1x)</option>
+                <option value="1.25">1.25x</option>
+                <option value="1.5">1.5x</option>
+                <option value="1.75">1.75x</option>
+                <option value="2">2x</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="menu-row">
+            <div style="width:100%">
+              <div class="small">Subtitles</div>
+              <select id="subtitleSelect" class="select">
+                <option value="off">Off</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="menu-row">
+            <div class="small">Autoplay</div>
+            <label class="toggle">
+              <input type="checkbox" id="autoplayToggle" checked />
+              <span style="opacity:.9">Enabled</span>
+            </label>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:20px">
+            <button id="closeMenu" class="btn secondary" style="flex:1">Close</button>
+            <button id="applySettings" class="btn" style="flex:1">Apply</button>
+          </div>
+        </div>
+
+        <!-- Speed Selection Panel -->
+        <div class="menu-panel" id="speedPanel" role="dialog" aria-hidden="true" style="right: 140px;">
+          <h4>⚡ Playback Speed</h4>
+          <div class="menu-row">
+            <button class="speed-option" data-speed="0.25">0.25x</button>
+            <button class="speed-option" data-speed="0.5">0.5x</button>
+            <button class="speed-option" data-speed="0.75">0.75x</button>
+          </div>
+          <div class="menu-row">
+            <button class="speed-option selected" data-speed="1">1x (Normal)</button>
+            <button class="speed-option" data-speed="1.25">1.25x</button>
+          </div>
+          <div class="menu-row">
+            <button class="speed-option" data-speed="1.5">1.5x</button>
+            <button class="speed-option" data-speed="1.75">1.75x</button>
+            <button class="speed-option" data-speed="2">2x</button>
+          </div>
+        </div>
+
+        <!-- Quality Selection Panel -->
+        <div class="menu-panel" id="qualityPanel" role="dialog" aria-hidden="true" style="right: 180px;">
+          <h4>🎬 Video Quality</h4>
+          <div id="qualityOptions" style="max-height: 300px; overflow-y: auto;">
+            <button class="quality-option selected" data-quality="auto">Auto (Adaptive)</button>
+          </div>
+        </div>
+
+        <!-- Audio Track Panel -->
+        <div class="menu-panel" id="audioPanel" role="dialog" aria-hidden="true" style="right: 220px;">
+          <h4>🎵 Audio Track</h4>
+          <div id="audioOptions" style="max-height: 300px; overflow-y: auto;">
+            <button class="audio-option selected" data-track="0">Default Audio</button>
+          </div>
+        </div>
+
+        <!-- Caption Panel -->
+        <div class="menu-panel" id="captionPanel" role="dialog" aria-hidden="true" style="right: 260px;">
+          <h4>💬 Subtitles / Captions</h4>
+          <div id="captionOptions" style="max-height: 300px; overflow-y: auto;">
+            <button class="caption-option selected" data-caption="off">Off</button>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls" id="controls">
+          <input type="range" id="seek" class="seek" min="0" max="100" value="0" step="0.1" aria-label="Seek" />
+          <div class="controls-row">
+            <div style="display:flex;gap:10px;align-items:center;flex:1">
+              <div class="control-btn" id="playPauseBtn" title="Play / Pause">
+                <svg id="playIcon" viewBox="0 0 24 24"><path d="M5 3v18l15-9L5 3z"/></svg>
+                <svg id="pauseIcon" viewBox="0 0 24 24" style="display:none">
+                  <path d="M6 19h4V5H6v14zM14 5v14h4V5h-4z"/>
+                </svg>
+              </div>
+
+              <div class="control-btn" id="skipBackBtn" title="Skip -10s">
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                  <path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/>
+                </svg>
+              </div>
+
+              <div class="control-btn" id="skipForwardBtn" title="Skip +10s">
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                  <path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/>
+                </svg>
+              </div>
+
+              <div class="time" id="timeDisplay">0:00 / 0:00</div>
+
+              <div class="control-btn" id="muteBtn" title="Mute / Unmute">
+                <svg id="volIcon" viewBox="0 0 24 24">
+                  <path d="M3 10v4h4l5 5V5L7 10H3z"/>
+                </svg>
+              </div>
+
+              <input type="range" id="volume" class="volume-range" min="0" max="1" step="0.05" value="1" aria-label="Volume" />
+            </div>
+
+            <div style="display:flex;gap:10px;align-items:center">
+              <div class="speed-display" id="speedDisplay" title="Click to change speed">1x</div>
+              
+              <button class="control-btn" id="speedBtn" title="Playback Speed">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="#fff">
+                  <path d="M10 8v8l6-4-6-4zm11-5H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/>
+                  <path d="M17.5 10.5c-.4 0-.8.3-.8.8v1.4c0 .4.4.8.8.8.4 0 .8-.4.8-.8v-1.4c0-.5-.4-.8-.8-.8zm-2.2-1.2c-.3.3-.3.8 0 1.1l1 1c.3.3.8.3 1.1 0 .3-.3.3-.8 0-1.1l-1-1c-.3-.3-.8-.3-1.1 0z"/>
+                </svg>
+              </button>
+              
+              <button class="control-btn" id="qualityBtn" title="Quality">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="#fff">
+                  <path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z"/>
+                  <path d="M8 15h2v-2H8v2zm0-3h2V9H8v3zm3 3h2v-5h-2v5zm3 0h2v-3h-2v3zm0-4h2V9h-2v2z"/>
+                </svg>
+              </button>
+              
+              <button class="control-btn" id="audioTrackBtn" title="Audio Track">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="#fff">
+                  <path d="M12 3v9.28c-.47-.17-.97-.28-1.5-.28C8.01 12 6 14.01 6 16.5S8.01 21 10.5 21c2.31 0 4.2-1.75 4.45-4H15V6h4V3h-7z"/>
+                </svg>
+              </button>
+              
+              <button class="control-btn" id="captionBtn" title="Captions">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="#fff">
+                  <path d="M19 4H5c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 7H9.5v-.5h-2v3h2V13H11v1c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1zm7 0h-1.5v-.5h-2v3h2V13H18v1c0 .55-.45 1-1 1h-3c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1z"/>
+                </svg>
+              </button>
+              
+              <button class="control-btn" id="fullscreenBtn" title="Fullscreen">
+                <svg viewBox="0 0 24 24">
+                  <path d="M7 14H5v5h5v-2H7v-3zM19 5h-5v2h3v3h2V5zM7 5h5V3H5v5h2V5zM14 19v-2h3v-3h2v5h-5z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+  (function() {
+    // Elements
+    const home = document.getElementById('home');
+    const playerScreen = document.getElementById('playerScreen');
+    const player = document.getElementById('player');
+    const ytPlayer = document.getElementById('ytPlayer');
+    const backToHome = document.getElementById('backToHome');
+    const inputUrl = document.getElementById('inputUrl');
+    const clearBtn = document.getElementById('clearBtn');
+    const playLinkBtn = document.getElementById('playLinkBtn');
+    const filePicker = document.getElementById('filePicker');
+    const loader = document.getElementById('loader');
+    const overlayPlayBtn = document.getElementById('overlayPlayBtn');
+    const centerOverlay = document.getElementById('centerOverlay');
+    const errorBox = document.getElementById('errorBox');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const playIcon = document.getElementById('playIcon');
+    const pauseIcon = document.getElementById('pauseIcon');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const seek = document.getElementById('seek');
+    const muteBtn = document.getElementById('muteBtn');
+    const volIcon = document.getElementById('volIcon');
+    const volume = document.getElementById('volume');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const videoTitle = document.getElementById('videoTitle');
+    const controls = document.getElementById('controls');
+    const menuPanel = document.getElementById('menuPanel');
+    const qualitySelect = document.getElementById('qualitySelect');
+    const subtitleSelect = document.getElementById('subtitleSelect');
+    const autoplayToggle = document.getElementById('autoplayToggle');
+    const applySettings = document.getElementById('applySettings');
+    const closeMenu = document.getElementById('closeMenu');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const shareBtn = document.getElementById('shareBtn');
+    const skipBackBtn = document.getElementById('skipBackBtn');
+    const skipForwardBtn = document.getElementById('skipForwardBtn');
+    const speedDisplay = document.getElementById('speedDisplay');
+    const speedSelect = document.getElementById('speedSelect');
+    const pipBtn = document.getElementById('pipBtn');
+    const playerWrap = document.getElementById('playerWrap');
+
+    // New control panel elements
+    const speedBtn = document.getElementById('speedBtn');
+    const qualityBtn = document.getElementById('qualityBtn');
+    const audioTrackBtn = document.getElementById('audioTrackBtn');
+    const captionBtn = document.getElementById('captionBtn');
+    
+    const speedPanel = document.getElementById('speedPanel');
+    const qualityPanel = document.getElementById('qualityPanel');
+    const audioPanel = document.getElementById('audioPanel');
+    const captionPanel = document.getElementById('captionPanel');
+
+    // Double tap elements
+    const tapZoneLeft = document.getElementById('tapZoneLeft');
+    const tapZoneRight = document.getElementById('tapZoneRight');
+    const tapFeedbackLeft = document.getElementById('tapFeedbackLeft');
+    const tapFeedbackRight = document.getElementById('tapFeedbackRight');
+
+    // State
+    let hls = null;
+    let shakaPlayer = null;
+    let activeSource = null;
+    let hideControlsTimer = null;
+    let errorTimeout = null;
+    let currentSpeed = 1;
+    let isYouTubeMode = false;
+    let lastTapTime = 0;
+    let tapTimer = null;
+
+    // Clear button functionality
+    inputUrl.addEventListener('input', () => {
+      if (inputUrl.value.trim()) {
+        clearBtn.classList.add('show');
+      } else {
+        clearBtn.classList.remove('show');
+      }
+    });
+
+    clearBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      inputUrl.value = '';
+      clearBtn.classList.remove('show');
+      inputUrl.focus();
+    });
+
+    // Double tap functionality
+    function handleDoubleTap(zone) {
+      const currentTime = new Date().getTime();
+      const tapLength = currentTime - lastTapTime;
+
+      if (tapLength < 300 && tapLength > 0) {
+        // Double tap detected
+        clearTimeout(tapTimer);
+        
+        if (zone === 'left') {
+          // Skip backward 10 seconds
+          player.currentTime = Math.max(0, player.currentTime - 10);
+          showTapFeedback(tapFeedbackLeft);
+        } else {
+          // Skip forward 10 seconds
+          player.currentTime = Math.min(player.duration || Infinity, player.currentTime + 10);
+          showTapFeedback(tapFeedbackRight);
+        }
+        
+        lastTapTime = 0;
+      } else {
+        // Single tap - wait for potential second tap
+        lastTapTime = currentTime;
+        tapTimer = setTimeout(() => {
+          // Single tap action (show/hide controls)
+          showControlsTemporarily();
+          lastTapTime = 0;
+        }, 300);
+      }
+    }
+
+    function showTapFeedback(feedbackElement) {
+      feedbackElement.classList.add('show');
+      setTimeout(() => {
+        feedbackElement.classList.remove('show');
+      }, 600);
+    }
+
+    tapZoneLeft.addEventListener('click', (e) => {
+      if (!isYouTubeMode) {
+        e.stopPropagation();
+        handleDoubleTap('left');
+      }
+    });
+
+    tapZoneRight.addEventListener('click', (e) => {
+      if (!isYouTubeMode) {
+        e.stopPropagation();
+        handleDoubleTap('right');
+      }
+    });
+
+    // YouTube & Vimeo URL Detection
+    function detectUrlType(url) {
+      const lower = url.toLowerCase();
+      
+      // YouTube detection - expanded patterns for better coverage
+      const ytPatterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/,
+        /m\.youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/
+      ];
+      
+      for (const pattern of ytPatterns) {
+        const match = url.match(pattern);
+        if (match) {
+          return { type: 'youtube', id: match[1] };
+        }
+      }
+
+      // Vimeo detection
+      const vimeoPattern = /vimeo\.com\/(\d+)/;
+      const vimeoMatch = url.match(vimeoPattern);
+      if (vimeoMatch) {
+        return { type: 'vimeo', id: vimeoMatch[1] };
+      }
+
+      // HLS detection
+      if (lower.includes('.m3u8')) {
+        return { type: 'hls', url };
+      }
+
+      // DASH detection
+      if (lower.includes('.mpd')) {
+        return { type: 'dash', url };
+      }
+
+      // Default to direct URL
+      return { type: 'direct', url };
+    }
+
+    // UI Functions
+    function showPlayer() {
+      home.style.display = 'none';
+      playerScreen.style.display = 'flex';
+      playerScreen.setAttribute('aria-hidden', 'false');
+      showControlsTemporarily();
+    }
+
+    function hidePlayer() {
+      home.style.display = '';
+      playerScreen.style.display = 'none';
+      playerScreen.setAttribute('aria-hidden', 'true');
+      stopAndCleanup();
+    }
+
+    function showLoader(show = true) {
+      loader.style.display = show ? 'flex' : 'none';
+    }
+
+    function showError(msg) {
+      clearTimeout(errorTimeout);
+      errorBox.textContent = msg || 'Playback failed';
+      errorBox.style.display = 'block';
+      errorTimeout = setTimeout(() => errorBox.style.display = 'none', 5000);
+    }
+
+    function clearError() {
+      errorBox.style.display = 'none';
+      clearTimeout(errorTimeout);
+    }
+
+    function formatTime(s) {
+      if (!isFinite(s)) return '0:00';
+      s = Math.floor(s);
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const sec = s % 60;
+      if (h > 0) {
+        return `${h}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+      }
+      return `${m}:${sec.toString().padStart(2, '0')}`;
+    }
+
+    function updateTimeUI() {
+      if (isYouTubeMode) return;
+      const cur = player.currentTime || 0;
+      const dur = player.duration || 0;
+      timeDisplay.textContent = `${formatTime(cur)} / ${formatTime(dur)}`;
+      if (isFinite(dur) && dur > 0) {
+        seek.max = dur;
+        seek.value = Math.min(cur, dur);
+      } else {
+        seek.value = 0;
+        seek.max = 100;
+      }
+    }
+
+    function updatePlayStateIcons() {
+      if (isYouTubeMode) return;
+      if (player.paused || player.ended) {
+        playIcon.style.display = '';
+        pauseIcon.style.display = 'none';
+      } else {
+        playIcon.style.display = 'none';
+        pauseIcon.style.display = '';
+      }
+    }
+
+    function showControlsTemporarily() {
+      playerWrap.classList.remove('hide-controls');
+      clearTimeout(hideControlsTimer);
+      hideControlsTimer = setTimeout(() => {
+        if (!player.paused && !isYouTubeMode) {
+          playerWrap.classList.add('hide-controls');
+        }
+      }, 3000);
+    }
+
+    // Cleanup
+    function stopAndCleanup() {
+      try {
+        if (hls) {
+          hls.destroy();
+          hls = null;
+        }
+      } catch (e) {}
+      try {
+        if (shakaPlayer) {
+          shakaPlayer.destroy();
+          shakaPlayer = null;
+        }
+      } catch (e) {}
+      try {
+        player.pause();
+        if (player.src && player.src.startsWith('blob:')) URL.revokeObjectURL(player.src);
+        player.removeAttribute('src');
+        player.load();
+        player.style.display = '';
+      } catch (e) {}
+      try {
+        ytPlayer.src = '';
+        ytPlayer.style.display = 'none';
+      } catch (e) {}
+      activeSource = null;
+      isYouTubeMode = false;
+      playerWrap.classList.remove('yt-player-mode');
+      showLoader(false);
+      clearError();
+      centerOverlay.style.display = 'none';
+      qualitySelect.innerHTML = '<option value="auto">Auto (adaptive)</option>';
+      subtitleSelect.innerHTML = '<option value="off">Off</option>';
+    }
+
+    // Play YouTube - OPTIMIZED with additional parameters
+    function playYouTube(videoId, title) {
+      showPlayer();
+      showLoader(true);
+      isYouTubeMode = true;
+      playerWrap.classList.add('yt-player-mode');
+      player.style.display = 'none';
+      ytPlayer.style.display = '';
+      videoTitle.textContent = title || 'YouTube Video';
+      
+      // Enhanced YouTube embed with optimized parameters for minimal ads
+      ytPlayer.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3&disablekb=0&fs=1&playsinline=1`;
+      
+      setTimeout(() => showLoader(false), 2000);
+    }
+
+    // Play Vimeo
+    function playVimeo(videoId, title) {
+      showPlayer();
+      showLoader(true);
+      isYouTubeMode = true;
+      playerWrap.classList.add('yt-player-mode');
+      player.style.display = 'none';
+      ytPlayer.style.display = '';
+      videoTitle.textContent = title || 'Vimeo Video';
+      
+      ytPlayer.src = `https://player.vimeo.com/video/${videoId}?autoplay=1`;
+      
+      setTimeout(() => showLoader(false), 2000);
+    }
+
+    // Playback - OPTIMIZED buffer settings
+    async function playSource(src, typeHint = 'auto', title = 'PLAYFLIX') {
+      clearError();
+      
+      // Detect URL type
+      const detected = detectUrlType(src);
+      
+      if (detected.type === 'youtube') {
+        playYouTube(detected.id, title);
+        return;
+      }
+      
+      if (detected.type === 'vimeo') {
+        playVimeo(detected.id, title);
+        return;
+      }
+
+      showLoader(true);
+      showPlayer();
+      isYouTubeMode = false;
+      playerWrap.classList.remove('yt-player-mode');
+      player.style.display = '';
+      ytPlayer.style.display = 'none';
+      videoTitle.textContent = title || 'PLAYFLIX';
+      activeSource = {type: typeHint, src, title};
+
+      if (hls) {
+        try {
+          hls.destroy();
+        } catch (e) {}
+        hls = null;
+      }
+      if (shakaPlayer) {
+        try {
+          shakaPlayer.destroy();
+        } catch (e) {}
+        shakaPlayer = null;
+      }
+      player.removeAttribute('src');
+      player.load();
+
+      const lower = src.toLowerCase();
+      const isM3U8 = lower.includes('.m3u8') || detected.type === 'hls';
+      const isMPD = lower.includes('.mpd') || detected.type === 'dash';
+      const isFile = src.startsWith('blob:') || typeHint === 'file';
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+      try {
+        if (isM3U8 && window.Hls && Hls.isSupported() && !isSafari) {
+          // OPTIMIZED HLS.js configuration for better buffering
+          hls = new Hls({
+            enableWorker: true,
+            lowLatencyMode: false, // Changed for better buffering
+            maxBufferLength: 60, // Increased from 20 to 60 seconds
+            maxMaxBufferLength: 120, // Increased from 40 to 120 seconds
+            maxBufferSize: 120 * 1000 * 1000, // Increased to 120MB
+            maxBufferHole: 0.5, // Increased tolerance
+            manifestLoadingTimeOut: 15000, // Increased timeout
+            manifestLoadingMaxRetry: 6,
+            levelLoadingTimeOut: 15000,
+            levelLoadingMaxRetry: 6,
+            fragLoadingTimeOut: 20000, // Increased timeout
+            fragLoadingMaxRetry: 8, // More retries
+            startLevel: -1,
+            autoStartLoad: true,
+            startPosition: -1,
+            capLevelToPlayerSize: true,
+            abrEwmaDefaultEstimate: 1000000, // Higher estimate
+            abrBandWidthFactor: 0.90, // Adjusted for better quality
+            abrBandWidthUpFactor: 0.7,
+            debug: false,
+            // Additional optimizations
+            maxLoadingDelay: 4,
+            maxBufferTime: 60,
+            backBufferLength: 30 // Keep 30s behind current position
+          });
+          hls.attachMedia(player);
+          hls.on(Hls.Events.MEDIA_ATTACHED, () => hls.loadSource(src));
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            showLoader(false);
+            populateHlsQualities();
+            populateHlsSubtitles();
+            attemptPlay();
+          });
+          hls.on(Hls.Events.ERROR, (event, data) => {
+            console.error('HLS error', data);
+            if (data.fatal) {
+              showLoader(false);
+              showError('HLS playback error - ' + (data.details || 'Unknown'));
+            }
+          });
+          return;
+        }
+
+        if (isMPD && window.shaka && shaka.Player.isBrowserSupported()) {
+          // OPTIMIZED Shaka Player configuration
+          shaka.polyfill.installAll();
+          shakaPlayer = new shaka.Player(player);
+          shakaPlayer.configure({
+            streaming: {
+              bufferingGoal: 60, // Increased from 20 to 60 seconds
+              rebufferingGoal: 20, // Increased from 10 to 20 seconds
+              bufferBehind: 30, // Keep more behind
+              retryParameters: {
+                timeout: 20000, // Increased timeout
+                maxAttempts: 8,
+                baseDelay: 1000,
+                backoffFactor: 2,
+                fuzzFactor: 0.5
+              },
+              startAtSegmentBoundary: true,
+              smallGapLimit: 0.5,
+              jumpLargeGaps: true,
+              alwaysStreamText: true,
+              // Additional optimizations
+              segmentPrefetchLimit: 3,
+              prefetchAudioLanguages: true
+            },
+            manifest: {
+              retryParameters: {
+                timeout: 20000,
+                maxAttempts: 8
+              },
+              availabilityWindowOverride: 0,
+              dash: {
+                ignoreMinBufferTime: false
+              }
+            },
+            abr: {
+              enabled: true,
+              defaultBandwidthEstimate: 1000000, // Higher estimate
+              switchInterval: 3,
+              bandwidthUpgradeTarget: 0.85,
+              bandwidthDowngradeTarget: 0.90
+            }
+          });
+          shakaPlayer.addEventListener('error', (e) => {
+            console.error('Shaka error', e);
+            showLoader(false);
+            showError('DASH playback error - ' + (e.detail?.message || 'Unknown'));
+          });
+          await shakaPlayer.load(src);
+          showLoader(false);
+          populateShakaQualities();
+          populateShakaSubtitles();
+          attemptPlay();
+          return;
+        }
+
+        // Native - preload changed to "auto" for faster loading
+        player.preload = 'auto'; // Changed from 'metadata'
+        player.src = src;
+        player.load();
+        player.addEventListener('loadedmetadata', () => {
+          showLoader(false);
+          populateNativeTextTracks();
+          attemptPlay();
+        }, {once: true});
+        player.addEventListener('canplaythrough', () => {
+          showLoader(false);
+        }, {once: true});
+        setTimeout(() => showLoader(false), 8000);
+      } catch (err) {
+        console.error('playSource error', err);
+        showLoader(false);
+        showError('Failed to start playback - ' + (err.message || 'Unknown error'));
+      }
+    }
+
+    function attemptPlay() {
+      player.play().then(() => {
+        updatePlayStateIcons();
+        centerOverlay.style.display = 'none';
+        clearError();
+      }).catch((e) => {
+        console.warn('Autoplay blocked', e);
+        centerOverlay.style.display = 'flex';
+        updatePlayStateIcons();
+      });
+    }
+
+    // HLS Quality
+    function populateHlsQualities() {
+      try {
+        if (!hls || !hls.levels) return;
+        qualitySelect.innerHTML = '<option value="auto">Auto (adaptive)</option>';
+        const levels = hls.levels.map((l, idx) => ({
+          idx,
+          height: l.height || 0,
+          bitrate: l.bitrate || 0
+        }));
+        const unique = [];
+        levels.forEach(l => {
+          const label = l.height ? `${l.height}p` : `${Math.round(l.bitrate / 1000)} kbps`;
+          if (!unique.some(u => u.label === label)) unique.push({label, idx: l.idx});
+        });
+        unique.sort((a, b) => {
+          const ah = parseInt(a.label);
+          const bh = parseInt(b.label);
+          return (isNaN(bh) ? 0 : bh) - (isNaN(ah) ? 0 : ah);
+        });
+        unique.forEach(u => {
+          const opt = document.createElement('option');
+          opt.value = u.idx;
+          opt.textContent = u.label;
+          qualitySelect.appendChild(opt);
+        });
+      } catch (e) {
+        console.warn('populateHlsQualities error', e);
+      }
+    }
+
+    function setHlsQuality(value) {
+      if (!hls) return;
+      if (value === 'auto') {
+        hls.currentLevel = -1;
+      } else {
+        const n = Number(value);
+        if (!isNaN(n)) {
+          hls.currentLevel = n;
+        }
+      }
+    }
+
+    function populateHlsSubtitles() {
+      try {
+        subtitleSelect.innerHTML = '<option value="off">Off</option>';
+        if (!hls || !hls.subtitleTracks) return;
+        hls.subtitleTracks.forEach((t, i) => {
+          const opt = document.createElement('option');
+          opt.value = i;
+          opt.textContent = t.name || t.lang || `Subtitle ${i + 1}`;
+          subtitleSelect.appendChild(opt);
+        });
+      } catch (e) {
+        console.warn('HLS subs error', e);
+      }
+    }
+
+    function setHlsSubtitle(value) {
+      if (!hls) return;
+      if (value === 'off') {
+        hls.subtitleTrack = -1;
+      } else {
+        hls.subtitleTrack = Number(value);
+      }
+    }
+
+    // Shaka Quality
+    function populateShakaQualities() {
+      try {
+        if (!shakaPlayer) return;
+        const tracks = shakaPlayer.getVariantTracks();
+        const unique = [];
+        tracks.forEach(t => {
+          const label = t.height ? `${t.height}p` : `${Math.round(t.bandwidth / 1000)} kbps`;
+          if (!unique.some(u => u.label === label)) unique.push({label, id: t.id});
+        });
+        qualitySelect.innerHTML = '<option value="auto">Auto (adaptive)</option>';
+        unique.sort((a, b) => {
+          const ah = parseInt(a.label);
+          const bh = parseInt(b.label);
+          return (isNaN(bh) ? 0 : bh) - (isNaN(ah) ? 0 : ah);
+        }).forEach(u => {
+          const opt = document.createElement('option');
+          opt.value = u.label;
+          opt.textContent = u.label;
+          qualitySelect.appendChild(opt);
+        });
+      } catch (e) {
+        console.warn('Shaka qualities error', e);
+      }
+    }
+
+    function setShakaQuality(value) {
+      if (!shakaPlayer) return;
+      if (value === 'auto') {
+        shakaPlayer.configure({abr: {enabled: true}});
+      } else {
+        shakaPlayer.configure({abr: {enabled: false}});
+        const tracks = shakaPlayer.getVariantTracks();
+        const target = parseInt(value);
+        let chosen = tracks.find(t => t.height === target);
+        if (!chosen) {
+          chosen = tracks.sort((a, b) => b.height - a.height).find(t => t.height <= target) || tracks[0];
+        }
+        if (chosen) shakaPlayer.selectVariantTrack(chosen, true);
+      }
+    }
+
+    function populateShakaSubtitles() {
+      try {
+        subtitleSelect.innerHTML = '<option value="off">Off</option>';
+        if (!shakaPlayer) return;
+        const tracks = shakaPlayer.getTextTracks();
+        tracks.forEach(t => {
+          const opt = document.createElement('option');
+          opt.value = t.language + '|' + t.kind;
+          opt.textContent = t.language + (t.label ? ' — ' + t.label : '');
+          subtitleSelect.appendChild(opt);
+        });
+      } catch (e) {
+        console.warn('Shaka subs error', e);
+      }
+    }
+
+    function setShakaSubtitle(value) {
+      if (!shakaPlayer) return;
+      if (value === 'off') {
+        shakaPlayer.setTextTrackVisibility(false);
+        return;
+      }
+      const [lang] = value.split('|');
+      const tracks = shakaPlayer.getTextTracks();
+      const found = tracks.find(t => t.language === lang);
+      if (found) {
+        shakaPlayer.selectTextLanguage(found.language);
+        shakaPlayer.setTextTrackVisibility(true);
+      } else {
+        shakaPlayer.setTextTrackVisibility(false);
+      }
+    }
+
+    // Native
+    function populateNativeTextTracks() {
+      try {
+        subtitleSelect.innerHTML = '<option value="off">Off</option>';
+        const tracks = player.textTracks || [];
+        for (let i = 0; i < tracks.length; i++) {
+          const t = tracks[i];
+          const opt = document.createElement('option');
+          opt.value = i;
+          opt.textContent = t.language || t.label || `Subtitle ${i + 1}`;
+          subtitleSelect.appendChild(opt);
+        }
+      } catch (e) {
+        console.warn('Native subs error', e);
+      }
+    }
+
+    function setNativeSubtitle(value) {
+      try {
+        for (let i = 0; i < (player.textTracks || []).length; i++) {
+          player.textTracks[i].mode = 'disabled';
+        }
+        if (value === 'off') return;
+        const idx = Number(value);
+        if (!isNaN(idx) && player.textTracks[idx]) player.textTracks[idx].mode = 'showing';
+      } catch (e) {
+        console.warn('setNativeSubtitle error', e);
+      }
+    }
+
+    // Settings
+    applySettings.addEventListener('click', () => {
+      const qv = qualitySelect.value;
+      if (hls) setHlsQuality(qv);
+      else if (shakaPlayer) setShakaQuality(qv);
+
+      const sv = subtitleSelect.value;
+      if (hls) setHlsSubtitle(sv);
+      else if (shakaPlayer) setShakaSubtitle(sv);
+      else setNativeSubtitle(sv);
+
+      const speed = parseFloat(speedSelect.value);
+      player.playbackRate = speed;
+      currentSpeed = speed;
+      speedDisplay.textContent = `${speed}x`;
+
+      menuPanel.style.display = 'none';
+    });
+
+    closeMenu.addEventListener('click', () => menuPanel.style.display = 'none');
+
+    // Speed control - hidden but functional
+    speedDisplay.addEventListener('click', () => {
+      const speeds = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+      const idx = speeds.indexOf(currentSpeed);
+      const nextIdx = (idx + 1) % speeds.length;
+      currentSpeed = speeds[nextIdx];
+      player.playbackRate = currentSpeed;
+      speedDisplay.textContent = currentSpeed === 1 ? '1x' : currentSpeed + 'x';
+      speedSelect.value = currentSpeed;
+    });
+
+    // Download & Share
+    downloadBtn.addEventListener('click', async () => {
+      if (isYouTubeMode) {
+        showError('Download not available for YouTube/Vimeo videos');
+        return;
+      }
+      if (!activeSource || !activeSource.src) {
+        showError('No active source to download');
+        return;
+      }
+      const src = activeSource.src;
+      if (src.startsWith('blob:')) {
+        try {
+          const resp = await fetch(src);
+          const blob = await resp.blob();
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = (activeSource.title && activeSource.title.replace(/\s+/g, '_')) || 'video';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+        } catch (e) {
+          showError('Download failed');
+        }
+        return;
+      }
+      if (src.match(/\.mp4($|\?)/i) || src.match(/\.webm($|\?)/i)) {
+        try {
+          const a = document.createElement('a');
+          a.href = src;
+          a.download = '';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        } catch (e) {
+          showError('Unable to download');
+        }
+        return;
+      }
+      showError('Download not available for streams');
+    });
+
+    shareBtn.addEventListener('click', async () => {
+      if (!activeSource || !activeSource.src) {
+        showError('No active source to share');
+        return;
+      }
+      const src = activeSource.src;
+      try {
+        if (navigator.share && !src.startsWith('blob:')) {
+          await navigator.share({
+            title: activeSource.title || 'Playflix',
+            text: 'Watch this video',
+            url: src
+          });
+        } else {
+          await navigator.clipboard.writeText(src);
+          showError('Link copied to clipboard ✓');
+        }
+      } catch (e) {
+        console.warn('Share error', e);
+        try {
+          await navigator.clipboard.writeText(src);
+          showError('Link copied to clipboard ✓');
+        } catch (_) {
+          showError('Share failed');
+        }
+      }
+    });
+
+    // Picture in Picture
+    pipBtn.addEventListener('click', async () => {
+      if (isYouTubeMode) {
+        showError('PiP not available for YouTube/Vimeo');
+        return;
+      }
+      try {
+        if (document.pictureInPictureElement) {
+          await document.exitPictureInPicture();
+        } else {
+          await player.requestPictureInPicture();
+        }
+      } catch (e) {
+        console.warn('PiP error', e);
+        showError('Picture-in-Picture not supported');
+      }
+    });
+
+    // UI Controls
+    playLinkBtn.addEventListener('click', () => {
+      const u = inputUrl.value.trim();
+      if (!u) {
+        alert('Please paste video URL');
+        inputUrl.focus();
+        return;
+      }
+      playSource(u, 'auto', u);
+    });
+
+    filePicker.addEventListener('change', (ev) => {
+      const f = ev.target.files && ev.target.files[0];
+      if (!f) return;
+      const url = URL.createObjectURL(f);
+      playSource(url, 'file', f.name || 'Local File');
+      filePicker.value = '';
+    });
+
+    overlayPlayBtn.addEventListener('click', () => {
+      if (player.paused || player.ended) player.play().catch(() => {});
+      else player.pause();
+      updatePlayStateIcons();
+      centerOverlay.style.display = player.paused ? 'flex' : 'none';
+    });
+
+    playPauseBtn.addEventListener('click', () => {
+      if (isYouTubeMode) return;
+      if (player.paused || player.ended) player.play().catch(() => {});
+      else player.pause();
+      updatePlayStateIcons();
+      showControlsTemporarily();
+    });
+
+    skipBackBtn.addEventListener('click', () => {
+      if (isYouTubeMode) return;
+      player.currentTime = Math.max(0, player.currentTime - 10);
+      showControlsTemporarily();
+    });
+
+    skipForwardBtn.addEventListener('click', () => {
+      if (isYouTubeMode) return;
+      player.currentTime = Math.min(player.duration || Infinity, player.currentTime + 10);
+      showControlsTemporarily();
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (playerScreen.style.display !== 'flex' || isYouTubeMode) return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (player.paused) player.play().catch(() => {});
+        else player.pause();
+        updatePlayStateIcons();
+        showControlsTemporarily();
+      } else if (e.code === 'KeyF') {
+        toggleFullscreen();
+      } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        player.currentTime = Math.max(0, player.currentTime - 10);
+        showControlsTemporarily();
+      } else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        player.currentTime = Math.min(player.duration || Infinity, player.currentTime + 10);
+        showControlsTemporarily();
+      } else if (e.code === 'ArrowUp') {
+        e.preventDefault();
+        player.volume = Math.min(1, player.volume + 0.1);
+        updateVolumeIcon();
+        showControlsTemporarily();
+      } else if (e.code === 'ArrowDown') {
+        e.preventDefault();
+        player.volume = Math.max(0, player.volume - 0.1);
+        updateVolumeIcon();
+        showControlsTemporarily();
+      } else if (e.code === 'KeyM') {
+        player.muted = !player.muted;
+        updateVolumeIcon();
+        showControlsTemporarily();
+      }
+    });
+
+    muteBtn.addEventListener('click', () => {
+      if (isYouTubeMode) return;
+      player.muted = !player.muted;
+      updateVolumeIcon();
+      showControlsTemporarily();
+    });
+
+    function updateVolumeIcon() {
+      if (player.muted || player.volume === 0) {
+        volIcon.innerHTML = '<path d="M3 10v4h4l5 5V5L7 10H3z"/><line x1="22" y1="9" x2="16" y2="15" stroke="#fff" stroke-width="2"/><line x1="16" y1="9" x2="22" y2="15" stroke="#fff" stroke-width="2"/>';
+      } else {
+        volIcon.innerHTML = '<path d="M3 10v4h4l5 5V5L7 10H3z"/>';
+      }
+    }
+
+    volume.addEventListener('input', (e) => {
+      if (isYouTubeMode) return;
+      player.volume = Number(e.target.value);
+      if (player.volume === 0) player.muted = true;
+      else player.muted = false;
+      updateVolumeIcon();
+    });
+
+    player.addEventListener('timeupdate', () => updateTimeUI());
+    player.addEventListener('durationchange', () => updateTimeUI());
+
+    let seeking = false;
+    seek.addEventListener('input', (e) => {
+      if (isYouTubeMode) return;
+      seeking = true;
+      player.currentTime = Number(e.target.value);
+      updateTimeUI();
+    });
+    seek.addEventListener('change', () => seeking = false);
+
+    player.addEventListener('waiting', () => showLoader(true));
+    player.addEventListener('playing', () => {
+      showLoader(false);
+      updatePlayStateIcons();
+      centerOverlay.style.display = 'none';
+      clearError();
+    });
+    player.addEventListener('ended', () => {
+      updatePlayStateIcons();
+      centerOverlay.style.display = 'flex';
+    });
+
+    player.addEventListener('error', (ev) => {
+      console.error('Video error:', ev);
+      showLoader(false);
+      const err = player.error;
+      if (!err) {
+        showError('Unknown playback error');
+        return;
+      }
+      if (err.code === 1) showError('Playback aborted');
+      else if (err.code === 2) showError('Network error');
+      else if (err.code === 3) showError('Decoding error - Format may not be supported');
+      else if (err.code === 4) showError('Media source not supported');
+      else showError('Playback failed');
+    });
+
+    backToHome.addEventListener('click', () => hidePlayer());
+    playerScreen.addEventListener('mousemove', showControlsTemporarily);
+    playerScreen.addEventListener('touchstart', showControlsTemporarily);
+    player.addEventListener('click', () => {
+      if (isYouTubeMode) return;
+      if (player.paused) player.play().catch(() => {});
+      else player.pause();
+      updatePlayStateIcons();
+    });
+
+    // Fullscreen
+    async function toggleFullscreen() {
+      const elem = playerWrap;
+      if (!document.fullscreenElement) {
+        try {
+          await elem.requestFullscreen();
+        } catch (e) {
+          console.warn('Fullscreen failed', e);
+        }
+      } else {
+        try {
+          await document.exitFullscreen();
+        } catch (e) {
+          console.warn('Exit fullscreen failed', e);
+        }
+      }
+    }
+    fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+    subtitleSelect.addEventListener('change', () => {
+      const val = subtitleSelect.value;
+      if (hls) setHlsSubtitle(val);
+      else if (shakaPlayer) setShakaSubtitle(val);
+      else setNativeSubtitle(val);
+    });
+
+    qualitySelect.addEventListener('change', () => {
+      const val = qualitySelect.value;
+      if (hls) setHlsQuality(val);
+      else if (shakaPlayer) setShakaQuality(val);
+    });
+
+    updatePlayStateIcons();
+    updateVolumeIcon();
+
+    window.addEventListener('beforeunload', () => {
+      try {
+        if (player.src && player.src.startsWith('blob:')) URL.revokeObjectURL(player.src);
+      } catch (e) {}
+    });
+
+    // ========== NEW CONTROL BUTTONS FUNCTIONALITY ==========
+    
+    // Close all panels function
+    function closeAllPanels() {
+      [menuPanel, speedPanel, qualityPanel, audioPanel, captionPanel].forEach(panel => {
+        if (panel) {
+          panel.style.display = 'none';
+          panel.setAttribute('aria-hidden', 'true');
+        }
+      });
+    }
+
+    // Speed Button Handler
+    speedBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = speedPanel.style.display === 'block';
+      closeAllPanels();
+      if (!isOpen) {
+        speedPanel.style.display = 'block';
+        speedPanel.setAttribute('aria-hidden', 'false');
+      }
+    });
+
+    // Speed options handler
+    document.querySelectorAll('.speed-option').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const speed = parseFloat(this.getAttribute('data-speed'));
+        if (!isYouTubeMode) {
+          player.playbackRate = speed;
+          currentSpeed = speed;
+          speedDisplay.textContent = speed === 1 ? '1x' : speed + 'x';
+        }
+        
+        // Update selected state
+        document.querySelectorAll('.speed-option').forEach(b => b.classList.remove('selected'));
+        this.classList.add('selected');
+        closeAllPanels();
+        showControlsTemporarily();
+      });
+    });
+
+    // Quality Button Handler
+    qualityBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = qualityPanel.style.display === 'block';
+      closeAllPanels();
+      if (!isOpen) {
+        qualityPanel.style.display = 'block';
+        qualityPanel.setAttribute('aria-hidden', 'false');
+      }
+    });
+
+    // Populate quality options dynamically
+    function populateQualityPanel() {
+      const qualityOptions = document.getElementById('qualityOptions');
+      qualityOptions.innerHTML = '<button class="quality-option selected" data-quality="auto">Auto (Adaptive)</button>';
+      
+      if (hls && hls.levels) {
+        hls.levels.forEach((level, idx) => {
+          const height = level.height;
+          const btn = document.createElement('button');
+          btn.className = 'quality-option';
+          btn.setAttribute('data-quality', idx);
+          btn.textContent = height ? `${height}p` : `Level ${idx}`;
+          btn.addEventListener('click', function() {
+            setHlsQuality(this.getAttribute('data-quality'));
+            document.querySelectorAll('.quality-option').forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            closeAllPanels();
+            showControlsTemporarily();
+          });
+          qualityOptions.appendChild(btn);
+        });
+      } else if (shakaPlayer) {
+        const tracks = shakaPlayer.getVariantTracks();
+        tracks.forEach((track, idx) => {
+          const height = track.height;
+          const btn = document.createElement('button');
+          btn.className = 'quality-option';
+          btn.setAttribute('data-quality', idx);
+          btn.textContent = height ? `${height}p` : `Level ${idx}`;
+          btn.addEventListener('click', function() {
+            setShakaQuality(this.getAttribute('data-quality'));
+            document.querySelectorAll('.quality-option').forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            closeAllPanels();
+            showControlsTemporarily();
+          });
+          qualityOptions.appendChild(btn);
+        });
+      }
+    }
+
+    // Audio Track Button Handler
+    audioTrackBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = audioPanel.style.display === 'block';
+      closeAllPanels();
+      if (!isOpen) {
+        audioPanel.style.display = 'block';
+        audioPanel.setAttribute('aria-hidden', 'false');
+      }
+    });
+
+    // Populate audio tracks dynamically
+    function populateAudioTracks() {
+      const audioOptions = document.getElementById('audioOptions');
+      audioOptions.innerHTML = '<button class="audio-option selected" data-track="0">Default Audio</button>';
+      
+      if (hls && hls.audioTracks && hls.audioTracks.length > 1) {
+        hls.audioTracks.forEach((track, idx) => {
+          const btn = document.createElement('button');
+          btn.className = 'audio-option';
+          if (idx === 0) btn.classList.add('selected');
+          btn.setAttribute('data-track', idx);
+          btn.textContent = track.name || `Audio ${idx + 1}` + (track.lang ? ` (${track.lang})` : '');
+          btn.addEventListener('click', function() {
+            hls.audioTrack = idx;
+            document.querySelectorAll('.audio-option').forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            closeAllPanels();
+            showControlsTemporarily();
+          });
+          audioOptions.appendChild(btn);
+        });
+      } else if (shakaPlayer) {
+        const tracks = shakaPlayer.getAudioLanguagesAndRoles();
+        if (tracks.length > 1) {
+          audioOptions.innerHTML = '';
+          tracks.forEach((track, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'audio-option';
+            if (idx === 0) btn.classList.add('selected');
+            btn.setAttribute('data-track', track.language);
+            btn.textContent = track.language || `Audio ${idx + 1}`;
+            btn.addEventListener('click', function() {
+              shakaPlayer.selectAudioLanguage(track.language);
+              document.querySelectorAll('.audio-option').forEach(b => b.classList.remove('selected'));
+              this.classList.add('selected');
+              closeAllPanels();
+              showControlsTemporarily();
+            });
+            audioOptions.appendChild(btn);
+          });
+        }
+      }
+    }
+
+    // Caption Button Handler
+    captionBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = captionPanel.style.display === 'block';
+      closeAllPanels();
+      if (!isOpen) {
+        captionPanel.style.display = 'block';
+        captionPanel.setAttribute('aria-hidden', 'false');
+      }
+    });
+
+    // Populate captions dynamically
+    function populateCaptions() {
+      const captionOptions = document.getElementById('captionOptions');
+      captionOptions.innerHTML = '<button class="caption-option selected" data-caption="off">Off</button>';
+      
+      if (hls && hls.subtitleTracks && hls.subtitleTracks.length > 0) {
+        hls.subtitleTracks.forEach((track, idx) => {
+          const btn = document.createElement('button');
+          btn.className = 'caption-option';
+          btn.setAttribute('data-caption', idx);
+          btn.textContent = track.name || `Subtitle ${idx + 1}` + (track.lang ? ` (${track.lang})` : '');
+          btn.addEventListener('click', function() {
+            setHlsSubtitle(this.getAttribute('data-caption'));
+            document.querySelectorAll('.caption-option').forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            closeAllPanels();
+            showControlsTemporarily();
+          });
+          captionOptions.appendChild(btn);
+        });
+      } else if (shakaPlayer) {
+        const tracks = shakaPlayer.getTextLanguagesAndRoles();
+        if (tracks.length > 0) {
+          tracks.forEach((track, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'caption-option';
+            btn.setAttribute('data-caption', track.language);
+            btn.textContent = track.language || `Subtitle ${idx + 1}`;
+            btn.addEventListener('click', function() {
+              setShakaSubtitle(track.language);
+              document.querySelectorAll('.caption-option').forEach(b => b.classList.remove('selected'));
+              this.classList.add('selected');
+              closeAllPanels();
+              showControlsTemporarily();
+            });
+            captionOptions.appendChild(btn);
+          });
+        }
+      } else {
+        // Native HTML5 tracks
+        const tracks = player.textTracks;
+        if (tracks && tracks.length > 0) {
+          for (let i = 0; i < tracks.length; i++) {
+            const track = tracks[i];
+            const btn = document.createElement('button');
+            btn.className = 'caption-option';
+            btn.setAttribute('data-caption', i);
+            btn.textContent = track.label || `Subtitle ${i + 1}` + (track.language ? ` (${track.language})` : '');
+            btn.addEventListener('click', function() {
+              setNativeSubtitle(this.getAttribute('data-caption'));
+              document.querySelectorAll('.caption-option').forEach(b => b.classList.remove('selected'));
+              this.classList.add('selected');
+              closeAllPanels();
+              showControlsTemporarily();
+            });
+            captionOptions.appendChild(btn);
+          }
+        }
+      }
+    }
+
+    // Hook into player events to populate panels when media is loaded
+    player.addEventListener('loadedmetadata', () => {
+      setTimeout(() => {
+        populateQualityPanel();
+        populateAudioTracks();
+        populateCaptions();
+      }, 500);
+    });
+    
+    // Also populate after a short delay when player screen is shown
+    const originalShowPlayer = () => {
+      setTimeout(() => {
+        populateQualityPanel();
+        populateAudioTracks();
+        populateCaptions();
+      }, 1500);
+    };
+    
+    // Call populate when entering player screen
+    playerScreen.addEventListener('transitionend', originalShowPlayer);
+
+    // Click outside to close panels
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.menu-panel') && 
+          !e.target.closest('.control-btn') &&
+          !e.target.closest('.icon-btn') &&
+          !e.target.closest('.gear')) {
+        closeAllPanels();
+      }
+    });
+
+  })();
+  </script>
+</body>
+</html>
