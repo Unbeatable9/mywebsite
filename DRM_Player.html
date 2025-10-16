@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DRM PLAYER</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.6.0/shaka-player.ui.min.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.6.0/controls.min.css" crossorigin="anonymous">
+
+  <style>
+    /* Reset & base */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      background: #000;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color: #eee;
+    }
+
+    /* Video container (existing) */
+    .shaka-video-container {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      object-fit: contain;
+    }
+
+    /* Hide default Shaka spinner (as before) */
+    .shaka-spinner-container,
+    .shaka-spinner,
+    .shaka-spinner-svg {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+    }
+
+    /* Chrome Only Modal (kept) */
+    #chromeModal .modal-content {
+      background: rgba(255, 0, 0, 0.06);
+      border: 1px solid rgba(255, 0, 0, 0.12);
+    }
+    #chromeModal h2 { color: #f87171; }
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      backdrop-filter: blur(6px);
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      animation: fadeIn .4s ease;
+    }
+    .modal.hidden { display: none !important; }
+    .modal-content {
+      background: rgba(255,255,255,0.04);
+      border-radius: 16px;
+      padding: 24px;
+      width: 92%;
+      max-width: 420px;
+      text-align: center;
+      color: #f3f4f6;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      backdrop-filter: blur(8px);
+    }
+    @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+    /* GUI overlay (initial screen) */
+    .gui {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9998;
+      transition: opacity .45s ease, transform .45s ease;
+      pointer-events: auto;
+    }
+    .gui.hidden {
+      opacity: 0;
+      transform: scale(.99) translateY(8px);
+      pointer-events: none;
+    }
+
+    .panel {
+      width: calc(100% - 40px);
+      max-width: 420px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px) saturate(1.05);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transform-origin: center;
+    }
+
+    .title {
+      font-weight: 600;
+      font-size: 18px;
+      margin-bottom: 4px;
+      color: #e6eefc;
+      letter-spacing: .2px;
+    }
+    .sub {
+      font-size: 12px;
+      color: rgba(230,238,252,0.6);
+      margin-bottom: 6px;
+    }
+
+    .field {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .field input {
+      width: 100%;
+      padding: 14px 44px 14px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(0,0,0,0.45);
+      color: #e6eefc;
+      outline: none;
+      font-size: 15px;
+      transition: box-shadow .18s ease, border-color .18s ease;
+    }
+    .field input::placeholder { color: rgba(230,238,252,0.45); font-size: 14px; }
+    .field input:focus {
+      border-color: rgba(84,160,255,0.95);
+      box-shadow: 0 6px 18px rgba(46,101,255,0.08);
+    }
+
+    /* small clear button inside each input */
+    .clear-btn {
+      position: absolute;
+      right: 10px;
+      height: 30px;
+      width: 30px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.03);
+      cursor: pointer;
+      transition: transform .12s ease, background .12s ease;
+      color: rgba(255,255,255,0.7);
+      font-weight: 600;
+      font-size: 16px;
+    }
+    .clear-btn:hover { transform: scale(1.05); background: rgba(255,255,255,0.04); }
+
+    /* Play button (floating circle) */
+    .play-wrap {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 6px;
+    }
+    .play-btn {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(180deg,#2f83ff, #0f61e6);
+      box-shadow: 0 8px 30px rgba(15,97,230,0.28), 0 2px 8px rgba(0,0,0,0.6);
+      border: none;
+      cursor: pointer;
+      transition: transform .12s ease, box-shadow .18s ease, opacity .2s ease;
+      outline: none;
+    }
+    .play-btn:hover { transform: translateY(-4px); }
+    .play-btn:active { transform: translateY(-2px); }
+    .play-btn .triangle {
+      width: 0;
+      height: 0;
+      border-left: 18px solid #fff;
+      border-top: 11px solid transparent;
+      border-bottom: 11px solid transparent;
+      margin-left: 4px;
+    }
+    .play-btn.pulse {
+      animation: pulseGlow 1.8s infinite;
+    }
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 8px 30px rgba(15,97,230,0.28), 0 0 0 0 rgba(46,101,255,0.0); transform: translateY(0); }
+      50% { box-shadow: 0 10px 40px rgba(15,97,230,0.32), 0 0 30px 8px rgba(46,101,255,0.05); transform: translateY(-3px); }
+      100% { box-shadow: 0 8px 30px rgba(15,97,230,0.28), 0 0 0 0 rgba(46,101,255,0.0); transform: translateY(0); }
+    }
+
+    /* Back button (circle with arrow) - shown only during playback */
+    .back-btn {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      z-index: 9999;
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.06);
+      transition: opacity .28s ease, transform .18s ease;
+      cursor: pointer;
+      color: #fff;
+      font-size: 18px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+      opacity: 1;
+    }
+    .back-btn.hidden { opacity: 0; transform: scale(.92); pointer-events: none; }
+    .back-btn svg { width: 18px; height: 18px; }
+
+    /* Hide central play overlay of shaka (if any) while playing */
+    .playing .shaka-big-play-button { display: none !important; }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .panel { padding: 16px; max-width: 94%; }
+      .play-btn { width: 62px; height: 62px; }
+      .play-btn .triangle { border-left-width: 16px; }
+    }
+
+    /* black overlay behind GUI */
+#bgMask{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;          /* solid black */
+  z-index: 9997;             /* ensure it's behind GUI elements but above page background */
+  transition: opacity .25s ease, visibility .25s ease;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: none;      /* allow clicks through to GUI if needed */
+}
+#bgMask.hidden{
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+  </style>
+</head>
+
+<body>
+
+  <!-- Chrome Only Modal -->
+  <div id="chromeModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-content">
+      <h2>Please Open in Chrome</h2>
+      <p>This site is optimized for <strong>Google Chrome</strong>. Please open the link in Chrome browser for the best experience.</p>
+    </div>
+  </div>
+
+  <!-- Place this inside <body>, before your GUI markup -->
+  <div id="bgMask"></div>
+
+  <!-- GUI overlay (initially visible) -->
+  <div id="gui" class="gui" aria-hidden="false">
+    <div class="panel" role="region" aria-label="Player setup">
+      <div>
+        <div class="title">Stream Setup</div>
+        <div class="sub">Enter values and press Play to start the video</div>
+      </div>
+
+      <div class="field">
+        <input id="streamInput" type="text" placeholder="Media Stream URL (e.g. https://.../manifest.mpd)" autocomplete="off">
+        <div class="clear-btn" data-target="streamInput" title="Clear">×</div>
+      </div>
+
+      <div class="field">
+        <input id="cookieInput" type="text" placeholder="Cookie Value (e.g. token=...)" autocomplete="off">
+        <div class="clear-btn" data-target="cookieInput" title="Clear">×</div>
+      </div>
+
+      <div class="field">
+        <input id="refererInput" type="text" placeholder="Referer Value (e.g. https://example.com)" autocomplete="off">
+        <div class="clear-btn" data-target="refererInput" title="Clear">×</div>
+      </div>
+
+      <div class="field">
+        <input id="originInput" type="text" placeholder="Origin Value (e.g. https://example.com)" autocomplete="off">
+        <div class="clear-btn" data-target="originInput" title="Clear">×</div>
+      </div>
+
+      <div class="field">
+        <input id="drmInput" type="text" placeholder="DRM License (format: KID:KEY)" autocomplete="off">
+        <div class="clear-btn" data-target="drmInput" title="Clear">×</div>
+      </div>
+
+      <div class="play-wrap">
+        <button id="playBtn" class="play-btn pulse" aria-label="Play">
+          <span class="triangle"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Back button - only visible during playback (top-left) -->
+  <button id="backBtn" class="back-btn hidden" title="Back to setup" aria-label="Back to setup">
+    <!-- left arrow icon (SVG) -->
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 18 9 12 15 6"></polyline>
+    </svg>
+  </button>
+
+  <!-- Video container (existing) -->
+  <div id="videoContainer" class="shaka-video-container" data-shaka-player>
+    <video id="video" autoplay playsinline preload="metadata" poster=""></video>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      /********** Chrome check (kept) **********/
+      const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+      if (!isChrome) {
+        const chromeModal = document.getElementById('chromeModal');
+        chromeModal.classList.remove('hidden');
+        chromeModal.setAttribute('aria-hidden', 'false');
+        return; // block video setup in non-Chrome
+      }
+
+      /********** Keep original shaka initialization **********/
+      shaka.polyfill.installAll();
+
+      if (!shaka.Player.isBrowserSupported()) {
+        console.error('Browser not supported');
+      } else {
+        // Elements
+        const video = document.getElementById('video');
+        const container = document.getElementById('videoContainer');
+
+        // GUI elements
+        const gui = document.getElementById('gui');
+        const playBtn = document.getElementById('playBtn');
+        const backBtn = document.getElementById('backBtn');
+
+        // Inputs
+        const streamInput = document.getElementById('streamInput');
+        const cookieInput = document.getElementById('cookieInput');
+        const refererInput = document.getElementById('refererInput');
+        const originInput = document.getElementById('originInput');
+        const drmInput = document.getElementById('drmInput');
+        // Auto split combined input (URL|Cookie|DRM)
+
+        streamInput.addEventListener('input', () => {
+        const text = streamInput.value.trim();
+        // If it includes | separator, split automatically
+        if (text.includes('|')) {
+        const parts = text.split('|').map(p => p.trim());
+       if (parts[0]) streamInput.value = parts[0];
+       if (parts[1]) cookieInput.value = parts[1];
+       if (parts[2]) drmInput.value = parts[2];
+        }
+       });
+
+        // Wire clear buttons
+        document.querySelectorAll('.clear-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const id = btn.getAttribute('data-target');
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+          });
+        });
+
+        // Shaka Player & UI
+        const player = new shaka.Player();
+        await player.attach(video);
+
+        const ui = new shaka.ui.Overlay(player, container, video);
+        ui.configure({
+          controlPanelElements: [
+            'play_pause', 'time_and_duration', 'mute', 'volume',
+            'spacer', 'language', 'captions', 'picture_in_picture',
+            'quality', 'fullscreen'
+          ],
+          volumeBarColors: {
+            base: 'rgba(63, 187, 1, 1)',
+            level: 'rgb(255, 69, 0)'
+          },
+          seekBarColors: {
+            base: 'rgb(41, 41, 163)',
+            buffered: 'rgb(35, 99, 3)',
+            played: 'rgba(63, 187, 1, 1)'
+          }
+        });
+
+        // Default placeholders that will be replaced when user provides inputs
+        let streamUrl = "ENTER STREAMING URL";
+        let cookieHeader = "ENTER COOKIE";
+        let refererHeader = "https://www.jiotv.com/";
+        let originHeader = "";
+        let drmConfig = { clearKeys: { "ENTER KID": "ENTER KEY" } };
+
+        // Networking filter uses current variables (they'll be updated before load)
+        player.getNetworkingEngine().registerRequestFilter((type, request) => {
+          // Set headers if provided (use fallback to existing values)
+          if (refererHeader) request.headers['Referer'] = refererHeader;
+          if (originHeader) request.headers['Origin'] = originHeader;
+          if (cookieHeader) request.headers['Cookie'] = cookieHeader;
+
+          // For manifest/segments, also append cookie to URL if required by some streams
+          if (
+            (type === shaka.net.NetworkingEngine.RequestType.MANIFEST ||
+             type === shaka.net.NetworkingEngine.RequestType.SEGMENT) &&
+            request.uris && request.uris[0] && !request.uris[0].includes('__hdnea__=')
+          ) {
+            const separator = request.uris[0].includes('?') ? '&' : '?';
+            // only append cookie when cookie looks like a query param (contains '=')
+            if (cookieHeader && cookieHeader.includes('=')) {
+              request.uris[0] += separator + cookieHeader;
+            }
+          }
+        });
+
+        // Helper: parse DRM input "KID:KEY" (if multiple pairs, allow comma separated)
+        function parseDrmInput(text) {
+          const map = {};
+          if (!text) return map;
+          // allow multiple separated by comma or semicolon or space
+          const pairs = text.split(/[,;|\n]+/).map(s => s.trim()).filter(Boolean);
+          for (const p of pairs) {
+            const idx = p.indexOf(':');
+            if (idx > -1) {
+              const kid = p.slice(0, idx).trim();
+              const key = p.slice(idx + 1).trim();
+              if (kid && key) {
+                map[kid] = key;
+              }
+            }
+          }
+          return map;
+        }
+
+        // Play logic - apply values then load
+        async function startPlayback() {
+          // read inputs (preserve values)
+          const s = streamInput.value.trim();
+          const c = cookieInput.value.trim();
+          const r = refererInput.value.trim();
+          const o = originInput.value.trim();
+          const d = drmInput.value.trim();
+
+          if (s) streamUrl = s;
+          if (c) cookieHeader = c;
+          if (r) refererHeader = r;
+          if (o) originHeader = o;
+
+          // parse DRM
+          const clearMap = parseDrmInput(d);
+          if (Object.keys(clearMap).length > 0) {
+            drmConfig.clearKeys = clearMap;
+          }
+
+          // Apply DRM configuration and networking values
+          player.configure({
+            drm: drmConfig,
+            streaming: {
+              lowLatencyMode: true,
+              bufferingGoal: 15,
+              rebufferingGoal: 2,
+              bufferBehind: 15,
+              retryParameters: { timeout: 10000, maxAttempts: 5, baseDelay: 300, backoffFactor: 1.2 },
+              segmentRequestTimeout: 8000,
+              segmentPrefetchLimit: 2,
+              useNativeHlsOnSafari: true
+            },
+            manifest: { retryParameters: { timeout: 8000, maxAttempts: 3 } }
+          });
+
+          // Hide the GUI and enter full screen & start player
+          gui.classList.add('hidden');
+          document.body.classList.add('playing');
+
+          // Try to make fullscreen on the container
+          try {
+            if (container.requestFullscreen) {
+              await container.requestFullscreen();
+            } else if (container.webkitRequestFullscreen) {
+              container.webkitRequestFullscreen();
+            }
+          } catch (err) {
+            // ignore fullscreen errors
+            console.warn('Fullscreen request failed:', err);
+          }
+
+          // Load the stream. If load fails it will print to console.
+          try {
+            await player.load(streamUrl);
+            // hide the play pulse so central GUI isn't visible
+            playBtn.classList.remove('pulse');
+            // ensure video plays (autoplay might be blocked on some browsers)
+            await video.play().catch(e => { /* ignore play errors */ });
+            // Show back button and start auto-hide timer
+            showBackTemporarily();
+          } catch (err) {
+            console.error('Load error:', err);
+            // restore GUI on error
+            stopPlaybackAndShowGui();
+            alert('Failed to load stream. Check console for details.');
+          }
+        }
+
+        // Stop playback and show GUI (Back behavior)
+        async function stopPlaybackAndShowGui() {
+          try {
+            // stop player and detach
+            if (player) {
+              player.unload().catch(()=>{});
+            }
+          } catch(e) { console.warn(e); }
+
+          // exit fullscreen if in it
+          try {
+            if (document.fullscreenElement) {
+              await document.exitFullscreen();
+            } else if (document.webkitFullscreenElement) {
+              document.webkitExitFullscreen && document.webkitExitFullscreen();
+            }
+          } catch (err) { /* ignore */ }
+
+          // show GUI again
+          gui.classList.remove('hidden');
+          document.body.classList.remove('playing');
+          // keep values in inputs (we didn't clear them)
+          hideBackButton();
+        }
+
+        // Back button and auto-hide logic
+        let backTimer = null;
+        function showBackTemporarily() {
+          backBtn.classList.remove('hidden');
+          // clear previous timer
+          if (backTimer) { clearTimeout(backTimer); backTimer = null; }
+          backTimer = setTimeout(() => {
+            hideBackButton();
+          }, 10000); // hide after 10s
+        }
+        function hideBackButton() {
+          backBtn.classList.add('hidden');
+          if (backTimer) { clearTimeout(backTimer); backTimer = null; }
+        }
+
+        // Show back on pointermovement while playing
+        let pointerTimeout = null;
+        function onPointerActivityDuringPlayback() {
+          // only show when playing (GUI hidden)
+          if (!document.body.classList.contains('playing')) return;
+          backBtn.classList.remove('hidden');
+          if (pointerTimeout) clearTimeout(pointerTimeout);
+          pointerTimeout = setTimeout(() => {
+            // hide back button after 10s of inactivity
+            hideBackButton();
+          }, 10000);
+        }
+        // Attach global pointer/mousemove/touch listeners
+        ['mousemove','pointermove','touchstart','touchmove'].forEach(evt => {
+          document.addEventListener(evt, onPointerActivityDuringPlayback, { passive: true });
+        });
+
+        // Wire play / back button
+        playBtn.addEventListener('click', async (e) => {
+          // small UX: require stream url
+          if (!streamInput.value.trim()) {
+            alert('Please enter Media Stream URL.');
+            streamInput.focus();
+            return;
+          }
+          playBtn.disabled = true;
+          await startPlayback();
+          playBtn.disabled = false;
+        });
+
+        backBtn.addEventListener('click', async (e) => {
+          await stopPlaybackAndShowGui();
+        });
+
+        // When user presses Esc (exit fullscreen), show GUI back if player is stopped:
+        document.addEventListener('fullscreenchange', () => {
+          if (!document.fullscreenElement && document.body.classList.contains('playing')) {
+            // Fullscreen exited but we are still in playing state — keep back button logic, or re-show GUI.
+            // We'll keep playing but show Back so user can actively return.
+            showBackTemporarily();
+          }
+        });
+
+        // If user interacts with the GUI inputs while file loaded previously, keep values (already done)
+        // (No further work required. Inputs keep values by default.)
+
+        // Small: Hide big shaka overlay play buttons while playing
+        video.addEventListener('play', () => {
+          document.body.classList.add('playing');
+        });
+        video.addEventListener('pause', () => {
+          // do nothing
+        });
+
+        // make Enter key on any input trigger Play
+        [streamInput, cookieInput, refererInput, originInput, drmInput].forEach(inp => {
+          inp.addEventListener('keydown', (ev) => {
+            if (ev.key === 'Enter') {
+              ev.preventDefault();
+              playBtn.click();
+            }
+          });
+        });
+
+        // On page load, you may want to prefill inputs with any default values read from code.
+        // For now we leave blank so user provides them.
+
+      } // end shaka supported
+    }); // DOMContentLoaded
+  </script>
+
+  <script>
+(function(){
+  const mask = document.getElementById('bgMask');
+  if(!mask) return;
+
+  function hideOverlay(){ mask.classList.add('hidden'); }
+  function showOverlay(){ mask.classList.remove('hidden'); }
+
+  // 🔸 Jab video player visible ho (for example jab aapka <video> load/play ho)
+  const vid = document.querySelector('video');
+  if(vid){
+    vid.addEventListener('playing', hideOverlay);   // video start hone par overlay hatana
+  }
+
+  // 🔸 Jab back button dabake GUI par wapas aaye
+  const backBtn = document.querySelector('#backButton, .back-btn, [data-back]');
+  if(backBtn){
+    backBtn.addEventListener('click', () => {
+      showOverlay();
+    });
+  }
+
+  // 🔸 Initial load par black page dikhe
+  showOverlay();
+})();
+</script>
+
+</body>
+</html>
