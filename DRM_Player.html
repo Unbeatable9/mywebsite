@@ -3,42 +3,126 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>DRM PLAYER</title>
+  <title>DRM PLAYER - Enhanced</title>
 
+  <!-- Shaka Player Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.6.0/shaka-player.ui.min.js" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.6.0/controls.min.css" crossorigin="anonymous">
 
   <style>
     /* Reset & base */
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      /* Dark theme colors */
+      --bg-primary: #0a0a0a;
+      --bg-secondary: #1a1a1a;
+      --bg-tertiary: #2a2a2a;
+      --accent-yellow: #fbbf24;
+      --accent-yellow-dark: #f59e0b;
+      --text-primary: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --shadow-color: rgba(0, 0, 0, 0.5);
+    }
+
+    [data-theme="light"] {
+      /* Light theme colors */
+      --bg-primary: #f9fafb;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #e5e7eb;
+      --accent-yellow: #f59e0b;
+      --accent-yellow-dark: #d97706;
+      --text-primary: #111827;
+      --text-secondary: #6b7280;
+      --glass-bg: rgba(255, 255, 255, 0.95);
+      --glass-border: rgba(0, 0, 0, 0.15);
+      --shadow-color: rgba(0, 0, 0, 0.25);
+    }
+
     html, body {
-      background: #000;
+      background: var(--bg-primary);
       height: 100vh;
       width: 100vw;
       overflow: hidden;
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      color: #eee;
+      color: var(--text-primary);
+      transition: background 0.3s ease, color 0.3s ease;
     }
 
-    /* Video container (existing) */
+    /* Animated gradient background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-tertiary) 100%);
+      opacity: 0.8;
+      z-index: -1;
+      animation: gradientShift 15s ease infinite;
+    }
+
+    @keyframes gradientShift {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      50% { transform: scale(1.1) rotate(2deg); }
+    }
+
+    /* Theme Toggle Button */
+    .theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      z-index: 10000;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px var(--shadow-color);
+    }
+
+    .theme-toggle:hover {
+      transform: scale(1.1) rotate(15deg);
+      box-shadow: 0 6px 20px var(--shadow-color);
+    }
+
+    .theme-toggle svg {
+      width: 24px;
+      height: 24px;
+      color: var(--accent-yellow);
+      transition: transform 0.3s ease;
+    }
+
+    .theme-toggle:active svg {
+      transform: rotate(180deg);
+    }
+
+    /* Video container */
     .shaka-video-container {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
-      background: #000;
+      background: var(--bg-primary);
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: background 0.3s ease;
     }
+    
     video {
       width: 100%;
       height: 100%;
-      background: #000;
+      background: var(--bg-primary);
       object-fit: contain;
     }
 
-    /* Hide default Shaka spinner (as before) */
+    /* Hide default Shaka spinner */
     .shaka-spinner-container,
     .shaka-spinner,
     .shaka-spinner-svg {
@@ -47,41 +131,72 @@
       opacity: 0 !important;
     }
 
-    /* Chrome Only Modal (kept) */
+    /* Chrome Only Modal */
     #chromeModal .modal-content {
-      background: rgba(255, 0, 0, 0.06);
-      border: 1px solid rgba(255, 0, 0, 0.12);
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.2);
     }
-    #chromeModal h2 { color: #f87171; }
+    
+    #chromeModal h2 { 
+      color: var(--accent-yellow); 
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
     .modal {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      backdrop-filter: blur(6px);
-      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(8px);
+      background: rgba(0,0,0,0.6);
       display: flex;
       justify-content: center;
       align-items: center;
       z-index: 9999;
-      animation: fadeIn .4s ease;
+      animation: fadeIn 0.4s ease;
     }
-    .modal.hidden { display: none !important; }
+    
+    .modal.hidden { 
+      display: none !important; 
+    }
+    
     .modal-content {
-      background: rgba(255,255,255,0.04);
-      border-radius: 16px;
-      padding: 24px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 32px;
       width: 92%;
       max-width: 420px;
       text-align: center;
-      color: #f3f4f6;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-      backdrop-filter: blur(8px);
+      color: var(--text-primary);
+      box-shadow: 0 10px 40px var(--shadow-color);
+      border: 1px solid var(--glass-border);
+      animation: slideUp 0.5s ease;
     }
-    @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
 
-    /* GUI overlay (initial screen) */
+    @keyframes fadeIn { 
+      from { opacity: 0; } 
+      to { opacity: 1; } 
+    }
+
+    @keyframes slideUp {
+      from { 
+        opacity: 0; 
+        transform: translateY(30px); 
+      }
+      to { 
+        opacity: 1; 
+        transform: translateY(0); 
+      }
+    }
+
+    /* GUI overlay */
     .gui {
       position: absolute;
       inset: 0;
@@ -89,196 +204,383 @@
       align-items: center;
       justify-content: center;
       z-index: 9998;
-      transition: opacity .45s ease, transform .45s ease;
+      transition: opacity 0.5s ease, transform 0.5s ease;
       pointer-events: auto;
     }
+    
     .gui.hidden {
       opacity: 0;
-      transform: scale(.99) translateY(8px);
+      transform: scale(0.95) translateY(20px);
       pointer-events: none;
     }
 
     .panel {
       width: calc(100% - 40px);
-      max-width: 420px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 14px;
-      padding: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-      backdrop-filter: blur(8px) saturate(1.05);
+      max-width: 480px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px) saturate(1.2);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 32px;
+      box-shadow: 0 20px 60px var(--shadow-color);
       display: flex;
       flex-direction: column;
-      gap: 14px;
-      transform-origin: center;
+      gap: 20px;
+      animation: panelEntry 0.6s ease;
+    }
+
+    @keyframes panelEntry {
+      from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
     }
 
     .title {
-      font-weight: 600;
-      font-size: 18px;
+      font-weight: 700;
+      font-size: 28px;
       margin-bottom: 4px;
-      color: #e6eefc;
-      letter-spacing: .2px;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--text-primary), var(--accent-yellow));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: titleGlow 3s ease-in-out infinite;
     }
+
+    @keyframes titleGlow {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+    
     .sub {
-      font-size: 12px;
-      color: rgba(230,238,252,0.6);
-      margin-bottom: 6px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
     }
 
     .field {
       position: relative;
       display: flex;
       align-items: center;
+      animation: fieldFadeIn 0.5s ease backwards;
     }
+
+    .field:nth-child(1) { animation-delay: 0.1s; }
+    .field:nth-child(2) { animation-delay: 0.2s; }
+    .field:nth-child(3) { animation-delay: 0.3s; }
+    .field:nth-child(4) { animation-delay: 0.4s; }
+    .field:nth-child(5) { animation-delay: 0.5s; }
+
+    @keyframes fieldFadeIn {
+      from {
+        opacity: 0;
+        transform: translateX(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    
     .field input {
       width: 100%;
-      padding: 14px 44px 14px 14px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.06);
-      background: rgba(0,0,0,0.45);
-      color: #e6eefc;
+      padding: 16px 50px 16px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--glass-border);
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      color: var(--text-primary);
       outline: none;
       font-size: 15px;
-      transition: box-shadow .18s ease, border-color .18s ease;
+      transition: all 0.3s ease;
     }
-    .field input::placeholder { color: rgba(230,238,252,0.45); font-size: 14px; }
+    
+    .field input::placeholder { 
+      color: var(--text-secondary); 
+      font-size: 14px; 
+    }
+    
     .field input:focus {
-      border-color: rgba(84,160,255,0.95);
-      box-shadow: 0 6px 18px rgba(46,101,255,0.08);
+      border-color: var(--accent-yellow);
+      box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1),
+                  0 8px 24px rgba(251, 191, 36, 0.15);
+      transform: translateY(-2px);
     }
 
-    /* small clear button inside each input */
+    /* Clear button */
     .clear-btn {
       position: absolute;
-      right: 10px;
-      height: 30px;
-      width: 30px;
-      border-radius: 8px;
+      right: 12px;
+      height: 32px;
+      width: 32px;
+      border-radius: 10px;
       display: grid;
       place-items: center;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.03);
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
       cursor: pointer;
-      transition: transform .12s ease, background .12s ease;
-      color: rgba(255,255,255,0.7);
+      transition: all 0.3s ease;
+      color: var(--text-secondary);
       font-weight: 600;
-      font-size: 16px;
+      font-size: 18px;
     }
-    .clear-btn:hover { transform: scale(1.05); background: rgba(255,255,255,0.04); }
+    
+    .clear-btn:hover { 
+      transform: scale(1.1) rotate(90deg); 
+      background: var(--accent-yellow);
+      color: var(--bg-primary);
+    }
 
-    /* Play button (floating circle) */
+    /* Play button */
     .play-wrap {
       display: flex;
       justify-content: flex-end;
-      margin-top: 6px;
+      margin-top: 10px;
     }
+    
     .play-btn {
-      width: 70px;
-      height: 70px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
       display: grid;
       place-items: center;
-      background: linear-gradient(180deg,#2f83ff, #0f61e6);
-      box-shadow: 0 8px 30px rgba(15,97,230,0.28), 0 2px 8px rgba(0,0,0,0.6);
+      background: linear-gradient(135deg, var(--accent-yellow), var(--accent-yellow-dark));
+      box-shadow: 0 10px 40px rgba(251, 191, 36, 0.4);
       border: none;
       cursor: pointer;
-      transition: transform .12s ease, box-shadow .18s ease, opacity .2s ease;
+      transition: all 0.3s ease;
       outline: none;
+      position: relative;
+      overflow: hidden;
     }
-    .play-btn:hover { transform: translateY(-4px); }
-    .play-btn:active { transform: translateY(-2px); }
+
+    .play-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.3));
+      border-radius: 50%;
+      transform: translateX(-100%);
+      transition: transform 0.6s ease;
+    }
+
+    .play-btn:hover::before {
+      transform: translateX(100%);
+    }
+    
+    .play-btn:hover { 
+      transform: translateY(-6px) scale(1.05); 
+      box-shadow: 0 15px 50px rgba(251, 191, 36, 0.5);
+    }
+    
+    .play-btn:active { 
+      transform: translateY(-3px) scale(1.02); 
+    }
+    
     .play-btn .triangle {
       width: 0;
       height: 0;
-      border-left: 18px solid #fff;
-      border-top: 11px solid transparent;
-      border-bottom: 11px solid transparent;
-      margin-left: 4px;
+      border-left: 20px solid var(--bg-primary);
+      border-top: 12px solid transparent;
+      border-bottom: 12px solid transparent;
+      margin-left: 6px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
     }
+    
     .play-btn.pulse {
-      animation: pulseGlow 1.8s infinite;
+      animation: playPulse 2s ease-in-out infinite;
     }
-    @keyframes pulseGlow {
-      0% { box-shadow: 0 8px 30px rgba(15,97,230,0.28), 0 0 0 0 rgba(46,101,255,0.0); transform: translateY(0); }
-      50% { box-shadow: 0 10px 40px rgba(15,97,230,0.32), 0 0 30px 8px rgba(46,101,255,0.05); transform: translateY(-3px); }
-      100% { box-shadow: 0 8px 30px rgba(15,97,230,0.28), 0 0 0 0 rgba(46,101,255,0.0); transform: translateY(0); }
+    
+    @keyframes playPulse {
+      0%, 100% { 
+        box-shadow: 0 10px 40px rgba(251, 191, 36, 0.4);
+        transform: scale(1);
+      }
+      50% { 
+        box-shadow: 0 15px 50px rgba(251, 191, 36, 0.6),
+                    0 0 0 15px rgba(251, 191, 36, 0.1);
+        transform: scale(1.05);
+      }
     }
 
-    /* Back button (circle with arrow) - shown only during playback */
+    /* Back button */
     .back-btn {
       position: absolute;
-      top: 18px;
-      left: 18px;
-      width: 46px;
-      height: 46px;
+      top: 20px;
+      left: 20px;
+      width: 50px;
+      height: 50px;
       border-radius: 50%;
       display: grid;
       place-items: center;
       z-index: 9999;
-      background: rgba(255,255,255,0.06);
-      backdrop-filter: blur(6px);
-      border: 1px solid rgba(255,255,255,0.06);
-      transition: opacity .28s ease, transform .18s ease;
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      transition: all 0.3s ease;
       cursor: pointer;
-      color: #fff;
+      color: var(--text-primary);
       font-size: 18px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
-      opacity: 1;
+      box-shadow: 0 6px 20px var(--shadow-color);
     }
-    .back-btn.hidden { opacity: 0; transform: scale(.92); pointer-events: none; }
-    .back-btn svg { width: 18px; height: 18px; }
+    
+    .back-btn.hidden { 
+      opacity: 0; 
+      transform: scale(0.8) translateX(-20px); 
+      pointer-events: none; 
+    }
+    
+    .back-btn:hover {
+      transform: scale(1.1);
+      background: var(--accent-yellow);
+      color: var(--bg-primary);
+      box-shadow: 0 8px 25px rgba(251, 191, 36, 0.4);
+    }
+    
+    .back-btn svg { 
+      width: 20px; 
+      height: 20px; 
+      transition: transform 0.3s ease;
+    }
 
-    /* Hide central play overlay of shaka (if any) while playing */
-    .playing .shaka-big-play-button { display: none !important; }
+    .back-btn:hover svg {
+      transform: translateX(-3px);
+    }
+
+    /* Hide central play overlay */
+    .playing .shaka-big-play-button { 
+      display: none !important; 
+    }
+
+    /* Background mask */
+    #bgMask {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg-primary);
+      z-index: 9997;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+      opacity: 1;
+      visibility: visible;
+      pointer-events: none;
+    }
+    
+    #bgMask.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    /* Floating particles animation */
+    .particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: var(--accent-yellow);
+      border-radius: 50%;
+      opacity: 0.3;
+      animation: float 15s infinite ease-in-out;
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translate(0, 0) scale(1);
+        opacity: 0;
+      }
+      10% {
+        opacity: 0.3;
+      }
+      90% {
+        opacity: 0.3;
+      }
+      100% {
+        transform: translate(100vw, -100vh) scale(0);
+        opacity: 0;
+      }
+    }
 
     /* Responsive */
     @media (max-width: 480px) {
-      .panel { padding: 16px; max-width: 94%; }
-      .play-btn { width: 62px; height: 62px; }
-      .play-btn .triangle { border-left-width: 16px; }
+      .panel { 
+        padding: 24px; 
+        max-width: 94%; 
+        border-radius: 20px;
+      }
+      .play-btn { 
+        width: 70px; 
+        height: 70px; 
+      }
+      .play-btn .triangle { 
+        border-left-width: 18px; 
+      }
+      .title {
+        font-size: 24px;
+      }
+      .theme-toggle {
+        width: 45px;
+        height: 45px;
+      }
     }
 
-    /* black overlay behind GUI */
-#bgMask{
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  background: #000;          /* solid black */
-  z-index: 9997;             /* ensure it's behind GUI elements but above page background */
-  transition: opacity .25s ease, visibility .25s ease;
-  opacity: 1;
-  visibility: visible;
-  pointer-events: none;      /* allow clicks through to GUI if needed */
-}
-#bgMask.hidden{
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
+    /* Custom scrollbar for light theme */
+    [data-theme="light"] ::-webkit-scrollbar {
+      width: 8px;
+    }
 
+    [data-theme="light"] ::-webkit-scrollbar-track {
+      background: var(--bg-tertiary);
+    }
+
+    [data-theme="light"] ::-webkit-scrollbar-thumb {
+      background: var(--accent-yellow);
+      border-radius: 4px;
+    }
   </style>
 </head>
 
-<body>
+<body data-theme="dark">
+
+  <!-- Theme Toggle Button -->
+  <button class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle theme">
+    <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <!-- Moon icon (for dark theme) -->
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+    </svg>
+  </button>
+
+  <!-- Floating particles -->
+  <div class="particles" id="particles"></div>
 
   <!-- Chrome Only Modal -->
   <div id="chromeModal" class="modal hidden" role="dialog" aria-modal="true">
     <div class="modal-content">
-      <h2>Please Open in Chrome</h2>
+      <h2>⚠️ Please Open in Chrome</h2>
       <p>This site is optimized for <strong>Google Chrome</strong>. Please open the link in Chrome browser for the best experience.</p>
     </div>
   </div>
 
-  <!-- Place this inside <body>, before your GUI markup -->
+  <!-- Background mask -->
   <div id="bgMask"></div>
 
-  <!-- GUI overlay (initially visible) -->
+  <!-- GUI overlay -->
   <div id="gui" class="gui" aria-hidden="false">
     <div class="panel" role="region" aria-label="Player setup">
       <div>
-        <div class="title">Stream Setup</div>
+        <div class="title">🎬 Stream Setup</div>
         <div class="sub">Enter values and press Play to start the video</div>
       </div>
 
@@ -315,65 +617,109 @@
     </div>
   </div>
 
-  <!-- Back button - only visible during playback (top-left) -->
+  <!-- Back button -->
   <button id="backBtn" class="back-btn hidden" title="Back to setup" aria-label="Back to setup">
-    <!-- left arrow icon (SVG) -->
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="15 18 9 12 15 6"></polyline>
     </svg>
   </button>
 
-  <!-- Video container (existing) -->
+  <!-- Video container -->
   <div id="videoContainer" class="shaka-video-container" data-shaka-player>
     <video id="video" autoplay playsinline preload="metadata" poster=""></video>
   </div>
 
   <script>
+    // Theme Toggle Logic
+    (function() {
+      const themeToggle = document.getElementById('themeToggle');
+      const themeIcon = document.getElementById('themeIcon');
+      const body = document.body;
+      
+      // Load saved theme from localStorage
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      body.setAttribute('data-theme', savedTheme);
+      updateThemeIcon(savedTheme);
+      
+      themeToggle.addEventListener('click', () => {
+        const currentTheme = body.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        body.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeIcon(newTheme);
+      });
+      
+      function updateThemeIcon(theme) {
+        if (theme === 'dark') {
+          // Show moon icon
+          themeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />';
+        } else {
+          // Show sun icon
+          themeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />';
+        }
+      }
+    })();
+
+    // Create floating particles
+    (function() {
+      const particlesContainer = document.getElementById('particles');
+      const particleCount = 15;
+      
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 15 + 's';
+        particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+        particlesContainer.appendChild(particle);
+      }
+    })();
+
+    // Main Shaka Player and UI Logic
     document.addEventListener('DOMContentLoaded', async () => {
-      /********** Chrome check (kept) **********/
+      /********** Chrome check **********/
       const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
       if (!isChrome) {
         const chromeModal = document.getElementById('chromeModal');
         chromeModal.classList.remove('hidden');
         chromeModal.setAttribute('aria-hidden', 'false');
-        return; // block video setup in non-Chrome
+        return;
       }
 
-      /********** Keep original shaka initialization **********/
+      /********** Shaka initialization **********/
       shaka.polyfill.installAll();
 
       if (!shaka.Player.isBrowserSupported()) {
         console.error('Browser not supported');
       } else {
-        // Elements
+        // --- DOM Elements ---
         const video = document.getElementById('video');
         const container = document.getElementById('videoContainer');
 
-        // GUI elements
+        // --- GUI Elements ---
         const gui = document.getElementById('gui');
         const playBtn = document.getElementById('playBtn');
         const backBtn = document.getElementById('backBtn');
 
-        // Inputs
+        // --- Input Fields ---
         const streamInput = document.getElementById('streamInput');
         const cookieInput = document.getElementById('cookieInput');
         const refererInput = document.getElementById('refererInput');
         const originInput = document.getElementById('originInput');
         const drmInput = document.getElementById('drmInput');
-        // Auto split combined input (URL|Cookie|DRM)
 
+        // --- Auto-split combined input ---
         streamInput.addEventListener('input', () => {
-        const text = streamInput.value.trim();
-        // If it includes | separator, split automatically
-        if (text.includes('|')) {
-        const parts = text.split('|').map(p => p.trim());
-       if (parts[0]) streamInput.value = parts[0];
-       if (parts[1]) cookieInput.value = parts[1];
-       if (parts[2]) drmInput.value = parts[2];
-        }
-       });
+          const text = streamInput.value.trim();
+          if (text.includes('|')) {
+            const parts = text.split('|').map(p => p.trim());
+            if (parts[0]) streamInput.value = parts[0];
+            if (parts[1]) cookieInput.value = parts[1];
+            if (parts[2]) drmInput.value = parts[2];
+          }
+        });
 
-        // Wire clear buttons
+        // --- Wire clear buttons ---
         document.querySelectorAll('.clear-btn').forEach(btn => {
           btn.addEventListener('click', (e) => {
             const id = btn.getAttribute('data-target');
@@ -382,7 +728,7 @@
           });
         });
 
-        // Shaka Player & UI
+        // --- Shaka Player & UI Initialization ---
         const player = new shaka.Player();
         await player.attach(video);
 
@@ -394,49 +740,45 @@
             'quality', 'fullscreen'
           ],
           volumeBarColors: {
-            base: 'rgba(63, 187, 1, 1)',
-            level: 'rgb(255, 69, 0)'
+            base: 'rgba(251, 191, 36, 0.3)',
+            level: 'rgb(251, 191, 36)'
           },
           seekBarColors: {
-            base: 'rgb(41, 41, 163)',
-            buffered: 'rgb(35, 99, 3)',
-            played: 'rgba(63, 187, 1, 1)'
+            base: 'rgb(42, 42, 42)',
+            buffered: 'rgb(74, 74, 74)',
+            played: 'rgba(251, 191, 36, 1)'
           }
         });
 
-        // Default placeholders that will be replaced when user provides inputs
+        // --- Default Variables ---
         let streamUrl = "ENTER STREAMING URL";
         let cookieHeader = "ENTER COOKIE";
         let refererHeader = "https://www.jiotv.com/";
         let originHeader = "";
         let drmConfig = { clearKeys: { "ENTER KID": "ENTER KEY" } };
 
-        // Networking filter uses current variables (they'll be updated before load)
+        // --- Networking Filter ---
         player.getNetworkingEngine().registerRequestFilter((type, request) => {
-          // Set headers if provided (use fallback to existing values)
           if (refererHeader) request.headers['Referer'] = refererHeader;
           if (originHeader) request.headers['Origin'] = originHeader;
           if (cookieHeader) request.headers['Cookie'] = cookieHeader;
 
-          // For manifest/segments, also append cookie to URL if required by some streams
           if (
             (type === shaka.net.NetworkingEngine.RequestType.MANIFEST ||
              type === shaka.net.NetworkingEngine.RequestType.SEGMENT) &&
             request.uris && request.uris[0] && !request.uris[0].includes('__hdnea__=')
           ) {
             const separator = request.uris[0].includes('?') ? '&' : '?';
-            // only append cookie when cookie looks like a query param (contains '=')
             if (cookieHeader && cookieHeader.includes('=')) {
               request.uris[0] += separator + cookieHeader;
             }
           }
         });
 
-        // Helper: parse DRM input "KID:KEY" (if multiple pairs, allow comma separated)
+        // --- DRM Input Parsing ---
         function parseDrmInput(text) {
           const map = {};
           if (!text) return map;
-          // allow multiple separated by comma or semicolon or space
           const pairs = text.split(/[,;|\n]+/).map(s => s.trim()).filter(Boolean);
           for (const p of pairs) {
             const idx = p.indexOf(':');
@@ -451,9 +793,8 @@
           return map;
         }
 
-        // Play logic - apply values then load
+        // --- Playback Logic ---
         async function startPlayback() {
-          // read inputs (preserve values)
           const s = streamInput.value.trim();
           const c = cookieInput.value.trim();
           const r = refererInput.value.trim();
@@ -465,13 +806,11 @@
           if (r) refererHeader = r;
           if (o) originHeader = o;
 
-          // parse DRM
           const clearMap = parseDrmInput(d);
           if (Object.keys(clearMap).length > 0) {
             drmConfig.clearKeys = clearMap;
           }
 
-          // Apply DRM configuration and networking values
           player.configure({
             drm: drmConfig,
             streaming: {
@@ -487,11 +826,9 @@
             manifest: { retryParameters: { timeout: 8000, maxAttempts: 3 } }
           });
 
-          // Hide the GUI and enter full screen & start player
           gui.classList.add('hidden');
           document.body.classList.add('playing');
 
-          // Try to make fullscreen on the container
           try {
             if (container.requestFullscreen) {
               await container.requestFullscreen();
@@ -499,87 +836,74 @@
               container.webkitRequestFullscreen();
             }
           } catch (err) {
-            // ignore fullscreen errors
             console.warn('Fullscreen request failed:', err);
           }
 
-          // Load the stream. If load fails it will print to console.
           try {
             await player.load(streamUrl);
-            // hide the play pulse so central GUI isn't visible
             playBtn.classList.remove('pulse');
-            // ensure video plays (autoplay might be blocked on some browsers)
-            await video.play().catch(e => { /* ignore play errors */ });
-            // Show back button and start auto-hide timer
+            await video.play().catch(e => {});
             showBackTemporarily();
           } catch (err) {
             console.error('Load error:', err);
-            // restore GUI on error
             stopPlaybackAndShowGui();
             alert('Failed to load stream. Check console for details.');
           }
         }
 
-        // Stop playback and show GUI (Back behavior)
+        // --- Stop Playback ---
         async function stopPlaybackAndShowGui() {
           try {
-            // stop player and detach
             if (player) {
-              player.unload().catch(()=>{});
+              await player.unload().catch(()=>{});
             }
           } catch(e) { console.warn(e); }
 
-          // exit fullscreen if in it
           try {
             if (document.fullscreenElement) {
               await document.exitFullscreen();
             } else if (document.webkitFullscreenElement) {
               document.webkitExitFullscreen && document.webkitExitFullscreen();
             }
-          } catch (err) { /* ignore */ }
+          } catch (err) {}
 
-          // show GUI again
           gui.classList.remove('hidden');
           document.body.classList.remove('playing');
-          // keep values in inputs (we didn't clear them)
           hideBackButton();
         }
 
-        // Back button and auto-hide logic
+        // --- Back Button Logic ---
         let backTimer = null;
         function showBackTemporarily() {
           backBtn.classList.remove('hidden');
-          // clear previous timer
           if (backTimer) { clearTimeout(backTimer); backTimer = null; }
           backTimer = setTimeout(() => {
             hideBackButton();
-          }, 10000); // hide after 10s
+          }, 10000);
         }
+        
         function hideBackButton() {
           backBtn.classList.add('hidden');
           if (backTimer) { clearTimeout(backTimer); backTimer = null; }
         }
 
-        // Show back on pointermovement while playing
+        // --- Pointer Activity Listener ---
         let pointerTimeout = null;
         function onPointerActivityDuringPlayback() {
-          // only show when playing (GUI hidden)
           if (!document.body.classList.contains('playing')) return;
           backBtn.classList.remove('hidden');
           if (pointerTimeout) clearTimeout(pointerTimeout);
           pointerTimeout = setTimeout(() => {
-            // hide back button after 10s of inactivity
             hideBackButton();
           }, 10000);
         }
-        // Attach global pointer/mousemove/touch listeners
+        
         ['mousemove','pointermove','touchstart','touchmove'].forEach(evt => {
           document.addEventListener(evt, onPointerActivityDuringPlayback, { passive: true });
         });
 
-        // Wire play / back button
+        // --- Event Listeners ---
         playBtn.addEventListener('click', async (e) => {
-          // small UX: require stream url
           if (!streamInput.value.trim()) {
             alert('Please enter Media Stream URL.');
             streamInput.focus();
@@ -594,27 +918,12 @@
           await stopPlaybackAndShowGui();
         });
 
-        // When user presses Esc (exit fullscreen), show GUI back if player is stopped:
         document.addEventListener('fullscreenchange', () => {
           if (!document.fullscreenElement && document.body.classList.contains('playing')) {
-            // Fullscreen exited but we are still in playing state — keep back button logic, or re-show GUI.
-            // We'll keep playing but show Back so user can actively return.
             showBackTemporarily();
           }
         });
 
-        // If user interacts with the GUI inputs while file loaded previously, keep values (already done)
-        // (No further work required. Inputs keep values by default.)
-
-        // Small: Hide big shaka overlay play buttons while playing
-        video.addEventListener('play', () => {
-          document.body.classList.add('playing');
-        });
-        video.addEventListener('pause', () => {
-          // do nothing
-        });
-
-        // make Enter key on any input trigger Play
         [streamInput, cookieInput, refererInput, originInput, drmInput].forEach(inp => {
           inp.addEventListener('keydown', (ev) => {
             if (ev.key === 'Enter') {
@@ -624,39 +933,41 @@
           });
         });
 
-        // On page load, you may want to prefill inputs with any default values read from code.
-        // For now we leave blank so user provides them.
+        video.addEventListener('play', () => {
+          document.body.classList.add('playing');
+        });
+        
+        video.addEventListener('pause', () => {});
 
-      } // end shaka supported
-    }); // DOMContentLoaded
+      }
+    });
   </script>
 
+  <!-- Overlay Management -->
   <script>
-(function(){
-  const mask = document.getElementById('bgMask');
-  if(!mask) return;
+    (function(){
+      const mask = document.getElementById('bgMask');
+      if(!mask) return;
 
-  function hideOverlay(){ mask.classList.add('hidden'); }
-  function showOverlay(){ mask.classList.remove('hidden'); }
+      function hideOverlay(){ mask.classList.add('hidden'); }
+      function showOverlay(){ mask.classList.remove('hidden'); }
 
-  // 🔸 Jab video player visible ho (for example jab aapka <video> load/play ho)
-  const vid = document.querySelector('video');
-  if(vid){
-    vid.addEventListener('playing', hideOverlay);   // video start hone par overlay hatana
-  }
+      const vid = document.querySelector('video');
+      if(vid){
+        vid.addEventListener('playing', hideOverlay);
+      }
 
-  // 🔸 Jab back button dabake GUI par wapas aaye
-  const backBtn = document.querySelector('#backButton, .back-btn, [data-back]');
-  if(backBtn){
-    backBtn.addEventListener('click', () => {
+      const backBtn = document.querySelector('#backButton, .back-btn, [data-back]');
+      if(backBtn){
+        backBtn.addEventListener('click', () => {
+          showOverlay();
+        });
+      }
+
       showOverlay();
-    });
-  }
-
-  // 🔸 Initial load par black page dikhe
-  showOverlay();
-})();
-</script>
+    })();
+  </script>
 
 </body>
 </html>
+
