@@ -1,104 +1,625 @@
-<!doctype html>
 
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Universal Video Portal</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: linear-gradient(180deg, #030305 0%, #07101a 100%);
-      font-family: 'Inter', sans-serif;
-      color: white;
-      display: flex;
-      flex-direction: column;
-    }header {
-  text-align: center;
-  padding: 25px 10px;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(8px);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Player Hub - Premium Streaming Experience</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-header h1 {
-  font-size: 30px;
-  margin: 0;
-  font-weight: 700;
-  letter-spacing: 1px;
-}
+        :root {
+            --primary-orange: #ff6b35;
+            --secondary-orange: #ff8c42;
+            --accent-orange: #ffa552;
+            --dark-bg: #0a0a0f;
+            --card-bg: #141420;
+            --text-light: #e0e0e0;
+            --text-white: #ffffff;
+        }
 
-.container {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 30px;
-}
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-light);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
 
-.glass-box {
-  width: 90%;
-  max-width: 900px;
-  min-height: 70vh;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(15px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 50px 20px;
-  gap: 40px;
-}
+        /* Animated Grid Background */
+        .grid-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(to right, rgba(255, 107, 53, 0.08) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 107, 53, 0.08) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+            z-index: 0;
+        }
 
-button {
-  width: 100%;
-  max-width: 500px;
-  background: linear-gradient(90deg, #2ea3ff, #1e90ff);
-  border: none;
-  color: white;
-  font-weight: 700;
-  font-size: 20px;
-  padding: 22px 0;
-  border-radius: 14px;
-  cursor: pointer;
-  box-shadow: 0 12px 40px rgba(46, 163, 255, 0.25);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
+        @keyframes gridMove {
+            0% {
+                transform: translate(0, 0);
+            }
+            100% {
+                transform: translate(50px, 50px);
+            }
+        }
 
-button:hover {
-  box-shadow: 0 15px 50px rgba(46,163,255,0.35);
-}
+        /* Gradient Overlay */
+        .gradient-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at top, rgba(255, 107, 53, 0.15) 0%, transparent 60%),
+                        radial-gradient(ellipse at bottom, rgba(255, 140, 66, 0.1) 0%, transparent 60%);
+            z-index: 1;
+            pointer-events: none;
+        }
 
-button:active {
-  transform: translateY(2px);
-}
+        /* Floating Orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.3;
+            animation: float 20s ease-in-out infinite;
+            z-index: 1;
+            pointer-events: none;
+        }
 
-.spacer {
-  flex: 1;
-}
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: linear-gradient(135deg, var(--primary-orange), var(--secondary-orange));
+            top: -200px;
+            left: -200px;
+            animation-delay: 0s;
+        }
 
-  </style>
+        .orb-2 {
+            width: 350px;
+            height: 350px;
+            background: linear-gradient(135deg, var(--secondary-orange), var(--accent-orange));
+            bottom: -150px;
+            right: -150px;
+            animation-delay: 5s;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translate(0, 0) scale(1);
+            }
+            33% {
+                transform: translate(50px, -50px) scale(1.1);
+            }
+            66% {
+                transform: translate(-30px, 30px) scale(0.9);
+            }
+        }
+
+        /* Container */
+        .container {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 30px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 80px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 30px;
+            background: linear-gradient(135deg, var(--primary-orange), var(--secondary-orange));
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 20px 60px rgba(255, 107, 53, 0.4);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 20px 60px rgba(255, 107, 53, 0.4);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 25px 80px rgba(255, 107, 53, 0.6);
+            }
+        }
+
+        .logo svg {
+            width: 40px;
+            height: 40px;
+            color: white;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-orange), var(--accent-orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            letter-spacing: -2px;
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            color: var(--text-light);
+            font-weight: 400;
+            opacity: 0.9;
+        }
+
+        /* Navigation Cards */
+        .nav-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            width: 100%;
+            max-width: 600px;
+            animation: fadeInUp 1s ease-out 0.3s both;
+        }
+
+        .nav-card {
+            position: relative;
+            background: rgba(20, 20, 32, 0.6);
+            border: 1px solid rgba(255, 107, 53, 0.2);
+            border-radius: 24px;
+            padding: 40px 50px;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(20px);
+            overflow: hidden;
+        }
+
+        .nav-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(255, 140, 66, 0.1));
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 0;
+        }
+
+        .nav-card::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(255, 107, 53, 0.3) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+            z-index: 0;
+        }
+
+        .nav-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: var(--primary-orange);
+            box-shadow: 
+                0 30px 60px rgba(255, 107, 53, 0.3),
+                0 0 80px rgba(255, 107, 53, 0.2),
+                inset 0 0 60px rgba(255, 107, 53, 0.1);
+        }
+
+        .nav-card:hover::before {
+            opacity: 1;
+        }
+
+        .nav-card:hover::after {
+            width: 400px;
+            height: 400px;
+        }
+
+        .nav-card:active {
+            transform: translateY(-4px) scale(1.01);
+        }
+
+        .icon-wrapper {
+            position: relative;
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--primary-orange), var(--secondary-orange));
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1;
+        }
+
+        .nav-card:hover .icon-wrapper {
+            transform: scale(1.15) rotate(5deg);
+            box-shadow: 0 15px 40px rgba(255, 107, 53, 0.5);
+        }
+
+        .icon-wrapper svg {
+            width: 35px;
+            height: 35px;
+            color: white;
+            transition: transform 0.4s ease;
+        }
+
+        .nav-card:hover .icon-wrapper svg {
+            transform: scale(1.1);
+        }
+
+        .nav-content {
+            position: relative;
+            z-index: 1;
+            flex: 1;
+        }
+
+        .nav-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-white);
+            margin-bottom: 8px;
+            transition: color 0.3s ease;
+        }
+
+        .nav-card:hover .nav-title {
+            color: var(--accent-orange);
+        }
+
+        .nav-description {
+            font-size: 1rem;
+            color: var(--text-light);
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+
+        .nav-card:hover .nav-description {
+            opacity: 1;
+        }
+
+        .arrow-icon {
+            position: relative;
+            z-index: 1;
+            width: 30px;
+            height: 30px;
+            color: var(--primary-orange);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0.6;
+        }
+
+        .nav-card:hover .arrow-icon {
+            transform: translateX(10px);
+            opacity: 1;
+            color: var(--accent-orange);
+        }
+
+        /* Footer */
+        .footer {
+            position: relative;
+            z-index: 10;
+            margin-top: 80px;
+            text-align: center;
+            opacity: 0.6;
+            animation: fadeIn 1s ease-out 0.6s both;
+        }
+
+        .footer p {
+            font-size: 0.95rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 0.6;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .subtitle {
+                font-size: 1.1rem;
+            }
+
+            .nav-card {
+                padding: 30px 25px;
+                gap: 20px;
+            }
+
+            .icon-wrapper {
+                width: 60px;
+                height: 60px;
+            }
+
+            .icon-wrapper svg {
+                width: 30px;
+                height: 30px;
+            }
+
+            .nav-title {
+                font-size: 1.4rem;
+            }
+
+            .nav-description {
+                font-size: 0.9rem;
+            }
+
+            .container {
+                padding: 40px 20px;
+            }
+
+            .header {
+                margin-bottom: 60px;
+            }
+        }
+
+        /* Particle effect on cursor */
+        .cursor-glow {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 107, 53, 0.6) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.1s ease;
+            mix-blend-mode: screen;
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <h1>Universal Video Portal</h1>
-  </header>  <div class="container">
-    <div class="glass-box">
-      <button id="drmBtn" data-link="player_modern_fixed_with_toggle.html">DRM VIDEO PLAYER</button>
-      <div class="spacer"></div>
-      <!-- Baad mein aur buttons yahan add kar sakte ho -->
+    <!-- Background Elements -->
+    <div class="grid-background"></div>
+    <div class="gradient-overlay"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="cursor-glow" id="cursorGlow"></div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+            </div>
+            <h1>Video Player Hub</h1>
+            <p class="subtitle">Choose your premium streaming experience</p>
+        </header>
+
+        <!-- Navigation Cards -->
+        <nav class="nav-container">
+            <!-- DRM Player Card -->
+            <a href="DRM_Player.html" class="nav-card" data-card="drm">
+                <div class="icon-wrapper">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                        <circle cx="12" cy="12" r="2"></circle>
+                        <path d="M6 12h.01"></path>
+                        <path d="M18 12h.01"></path>
+                    </svg>
+                </div>
+                <div class="nav-content">
+                    <h2 class="nav-title">DRM Player</h2>
+                    <p class="nav-description">Secure protected content streaming with DRM support</p>
+                </div>
+                <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </a>
+
+            <!-- Live TV Card -->
+            <a href="LiveTV.html" class="nav-card" data-card="livetv">
+                <div class="icon-wrapper">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7z"></path>
+                        <circle cx="9" cy="11" r="2" fill="currentColor"></circle>
+                        <path d="M7 21h10"></path>
+                        <path d="M12 17v4"></path>
+                    </svg>
+                </div>
+                <div class="nav-content">
+                    <h2 class="nav-title">Live TV</h2>
+                    <p class="nav-description">Watch live television channels in high quality</p>
+                </div>
+                <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </a>
+
+            <!-- Local Video Player Card -->
+            <a href="Local_Video_Player.html" class="nav-card" data-card="local">
+                <div class="icon-wrapper">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 20h16"></path>
+                        <path d="m6 16 6-12 6 12"></path>
+                        <path d="M8 12h8"></path>
+                        <circle cx="12" cy="8" r="2"></circle>
+                    </svg>
+                </div>
+                <div class="nav-content">
+                    <h2 class="nav-title">Local Video Player</h2>
+                    <p class="nav-description">Play your local media files with advanced features</p>
+                </div>
+                <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </a>
+        </nav>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2025 Video Player Hub. Premium Streaming Experience.</p>
+        </footer>
     </div>
-  </div>  <script>
-    document.getElementById('drmBtn').addEventListener('click', function(){
-      const url = this.dataset.link || 'player_modern_fixed_with_toggle.html';
-      window.location.href = url;
-    });
-  </script></body>
+
+    <script>
+        // Cursor glow effect
+        const cursorGlow = document.getElementById('cursorGlow');
+        let mouseX = 0, mouseY = 0;
+        let glowX = 0, glowY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        function animateGlow() {
+            glowX += (mouseX - glowX) * 0.1;
+            glowY += (mouseY - glowY) * 0.1;
+            
+            cursorGlow.style.left = glowX + 'px';
+            cursorGlow.style.top = glowY + 'px';
+            
+            requestAnimationFrame(animateGlow);
+        }
+        animateGlow();
+
+        // Card hover effects with 3D transform
+        const cards = document.querySelectorAll('.nav-card');
+        
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transition = 'transform 0.1s ease';
+            });
+
+            card.addEventListener('mousemove', function(e) {
+                const rect = this.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const rotateX = (y - centerY) / 10;
+                const rotateY = (centerX - x) / 10;
+                
+                this.style.transform = `translateY(-8px) scale(1.02) perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            });
+
+            card.addEventListener('mouseleave', function() {
+                this.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+                this.style.transform = 'translateY(0) scale(1) perspective(1000px) rotateX(0) rotateY(0)';
+            });
+        });
+
+        // Add ripple effect on click
+        cards.forEach(card => {
+            card.addEventListener('click', function(e) {
+                const ripple = document.createElement('div');
+                ripple.style.position = 'absolute';
+                ripple.style.borderRadius = '50%';
+                ripple.style.background = 'rgba(255, 107, 53, 0.6)';
+                ripple.style.width = '20px';
+                ripple.style.height = '20px';
+                ripple.style.pointerEvents = 'none';
+                ripple.style.animation = 'rippleEffect 0.6s ease-out';
+                
+                const rect = this.getBoundingClientRect();
+                ripple.style.left = (e.clientX - rect.left - 10) + 'px';
+                ripple.style.top = (e.clientY - rect.top - 10) + 'px';
+                
+                this.appendChild(ripple);
+                
+                setTimeout(() => ripple.remove(), 600);
+            });
+        });
+
+        // Add ripple animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes rippleEffect {
+                to {
+                    transform: scale(20);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Parallax effect on scroll
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const orb1 = document.querySelector('.orb-1');
+            const orb2 = document.querySelector('.orb-2');
+            
+            if (orb1) orb1.style.transform = `translate(${scrolled * 0.2}px, ${scrolled * 0.3}px)`;
+            if (orb2) orb2.style.transform = `translate(${-scrolled * 0.2}px, ${-scrolled * 0.3}px)`;
+        });
+
+        // Add shine effect on page load
+        window.addEventListener('load', () => {
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.animation = `fadeInUp 0.6s ease-out ${index * 0.15}s both`;
+                }, 300);
+            });
+        });
+    </script>
+</body>
 </html>
