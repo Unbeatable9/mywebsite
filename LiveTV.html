@@ -363,6 +363,71 @@
             height: 100%;
             background: #000;
         }
+        /* Hide native video controls on all browsers */
+        video::-webkit-media-controls {
+            display: none !important;
+        }
+        
+        video::-webkit-media-controls-enclosure {
+            display: none !important;
+        }
+        
+        video::-webkit-media-controls-panel {
+            display: none !important;
+        }
+        
+        video::-webkit-media-controls-play-button {
+            display: none !important;
+        }
+        
+        video::-webkit-media-controls-timeline {
+            display: none !important;
+        }
+        
+        video::-webkit-media-controls-current-time-display {
+            display: none !important;
+        }
+        
+        video::-webkit-media-controls-time-remaining-display {
+            display: none !important;
+        }
+        
+        video::-webkit-media-controls-mute-button {
+            display: none !important;
+        }
+        
+        video::-webkit-media-controls-volume-slider {
+            display: none !important;
+        }
+        
+        video::-webkit-media-controls-fullscreen-button {
+            display: none !important;
+        }
+        
+        /* Firefox */
+        video::-moz-media-controls {
+            display: none !important;
+        }
+        
+        /* Ensure no controls attribute is applied */
+        #video {
+            pointer-events: auto;
+        }
+
+        /* Hide large time displays on Shaka Player */
+        .shaka-current-time {
+            display: none !important;
+        }
+        
+        .shaka-time-and-duration {
+            display: none !important;
+        }
+        
+        /* Hide large overlays during seeking/buffering */
+        .shaka-ad-position,
+        .shaka-ad-counter {
+            display: none !important;
+        }
 
         /* Loading State */
         .loading {
@@ -442,6 +507,17 @@
 
             .channel-name {
                 font-size: 1rem;
+            }
+            
+            /* Extra safeguard for mobile - hide all native video controls */
+            #video {
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                appearance: none;
+            }
+            
+            video {
+                object-fit: contain;
             }
         }
 
