@@ -404,9 +404,11 @@
       height: 100%;
       border: none;
       background: #000;
+      position: relative;
+      z-index: 1;
     }
 
-    /* Double tap zones */
+    /* Double tap zones - UPDATED: lower z-index for YouTube mode */
     .tap-zone {
       position: absolute;
       top: 0;
@@ -422,6 +424,12 @@
 
     .tap-zone-right {
       right: 0;
+    }
+
+    /* IMPORTANT: Hide tap zones in YouTube mode to avoid blocking skip ad button */
+    .yt-player-mode .tap-zone {
+      display: none;
+      pointer-events: none;
     }
 
     /* Double tap feedback */
@@ -472,6 +480,12 @@
       font-weight: 700;
       color: #fff;
       text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+    }
+
+    /* IMPORTANT: Hide tap feedback in YouTube mode */
+    .yt-player-mode .tap-feedback {
+      display: none !important;
+      pointer-events: none;
     }
 
     /* Top Bar */
@@ -856,6 +870,70 @@
       display: none !important;
     }
 
+    /* NEW: Three-dot menu button - only visible on mobile portrait */
+    .three-dot-menu-btn {
+      display: none;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      align-items: center;
+      justify-content: center;
+      min-width: 40px;
+      min-height: 40px;
+    }
+
+    .three-dot-menu-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1);
+    }
+
+    .three-dot-menu-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: #fff;
+    }
+
+    /* NEW: Three-dot dropdown panel */
+    #threeDotPanel {
+      position: absolute;
+      right: 15px;
+      bottom: 80px;
+      background: rgba(10, 10, 20, 0.98);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 15px;
+      border-radius: 12px;
+      width: 280px;
+      display: none;
+      z-index: 250;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    #threeDotPanel h4 {
+      font-size: 14px;
+      margin-bottom: 12px;
+      color: #8a2be2;
+      font-weight: 600;
+    }
+
+    #threeDotPanel .control-btn {
+      width: 100%;
+      margin-bottom: 8px;
+      justify-content: flex-start;
+      gap: 10px;
+      padding: 12px;
+    }
+
+    #threeDotPanel .control-btn span {
+      font-size: 13px;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .landing {
@@ -916,6 +994,62 @@
       .format-list {
         grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       }
+
+      /* MOBILE PORTRAIT OPTIMIZATIONS */
+      /* Hide individual control buttons on mobile portrait, show three-dot menu */
+      @media (orientation: portrait) {
+        /* Show three-dot menu button */
+        .three-dot-menu-btn {
+          display: flex;
+        }
+
+        /* Hide speed, quality, audio, caption buttons on mobile portrait */
+        #speedBtn, #qualityBtn, #audioTrackBtn, #captionBtn {
+          display: none !important;
+        }
+
+        /* Adjust top right actions for better visibility */
+        .top-right-actions {
+          gap: 6px;
+        }
+
+        .icon-btn {
+          padding: 8px;
+        }
+
+        .icon-btn svg {
+          width: 16px;
+          height: 16px;
+        }
+
+        .title {
+          font-size: 14px;
+          max-width: 150px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        /* Make three-dot panel more compact on portrait */
+        #threeDotPanel {
+          width: 250px;
+          right: 10px;
+          bottom: 70px;
+        }
+      }
+
+      /* MOBILE LANDSCAPE OPTIMIZATIONS */
+      @media (orientation: landscape) {
+        /* On landscape, keep all buttons visible */
+        .three-dot-menu-btn {
+          display: none;
+        }
+
+        /* Ensure all buttons are visible */
+        #speedBtn, #qualityBtn, #audioTrackBtn, #captionBtn {
+          display: flex !important;
+        }
+      }
     }
 
     @media (max-width: 480px) {
@@ -940,6 +1074,32 @@
       .control-btn svg {
         width: 16px;
         height: 16px;
+      }
+
+      /* Additional mobile portrait optimizations */
+      @media (orientation: portrait) {
+        .back-btn {
+          padding: 8px 12px;
+          font-size: 12px;
+        }
+
+        .back-btn svg {
+          width: 14px;
+          height: 14px;
+        }
+
+        .player-top {
+          padding: 10px;
+        }
+
+        .controls {
+          padding: 10px;
+        }
+
+        .time {
+          font-size: 11px;
+          min-width: 80px;
+        }
       }
     }
 
@@ -1026,7 +1186,7 @@
             <input id="inputUrl" class="url-input" placeholder="YouTube, Vimeo, HLS, MP4... paste any video URL here" />
             <button class="clear-btn" id="clearBtn" title="Clear">
               <svg viewBox="0 0 24 24" fill="none">
-                <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
             </button>
           </div>
@@ -1054,8 +1214,8 @@
         <div class="tap-feedback left" id="tapFeedbackLeft">
           <div class="tap-feedback-icon">
             <svg viewBox="0 0 24 24">
-              <path d="M11 17l-5-5 5-5v10z"/>
-              <path d="M18 17l-5-5 5-5v10z"/>
+              <path d="M11 17l-5-5 5-5v10z" />
+              <path d="M18 17l-5-5 5-5v10z" />
             </svg>
           </div>
           <div class="tap-feedback-text">-10s</div>
@@ -1063,8 +1223,8 @@
         <div class="tap-feedback right" id="tapFeedbackRight">
           <div class="tap-feedback-icon">
             <svg viewBox="0 0 24 24">
-              <path d="M13 7l5 5-5 5V7z"/>
-              <path d="M6 7l5 5-5 5V7z"/>
+              <path d="M13 7l5 5-5 5V7z" />
+              <path d="M6 7l5 5-5 5V7z" />
             </svg>
           </div>
           <div class="tap-feedback-text">+10s</div>
@@ -1075,7 +1235,7 @@
           <div style="display:flex;gap:12px;align-items:center">
             <div class="back-btn" id="backToHome">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" style="stroke:#fff;stroke-width:2">
-                <path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
               Back
             </div>
@@ -1086,19 +1246,19 @@
             <div class="top-right-actions">
               <div class="icon-btn" id="pipBtn" title="Picture-in-Picture">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="1.5">
-                  <rect x="3" y="3" width="18" height="18" rx="2"/>
-                  <rect x="13" y="13" width="6" height="6" rx="1"/>
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <rect x="13" y="13" width="6" height="6" rx="1" />
                 </svg>
               </div>
               <div class="icon-btn" id="downloadBtn" title="Download">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="1.5">
-                  <path d="M12 3v12"/><path d="M5 12l7 7 7-7"/><path d="M5 21h14"/>
+                  <path d="M12 3v12" /><path d="M5 12l7 7 7-7" /><path d="M5 21h14" />
                 </svg>
               </div>
               <div class="icon-btn" id="shareBtn" title="Share">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="1.5">
-                  <path d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7"/>
-                  <path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/>
+                  <path d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7" />
+                  <path d="M16 6l-4-4-4 4" /><path d="M12 2v13" />
                 </svg>
               </div>
             </div>
@@ -1108,7 +1268,7 @@
         <!-- Center Overlay -->
         <div class="center-overlay" id="centerOverlay" style="display:none;pointer-events:none">
           <div class="overlay-play" id="overlayPlayBtn" title="Play/Pause" style="pointer-events:auto">
-            <svg viewBox="0 0 24 24"><path d="M5 3v18l15-9L5 3z"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M5 3v18l15-9L5 3z" /></svg>
           </div>
         </div>
 
@@ -1210,36 +1370,65 @@
           </div>
         </div>
 
+        <!-- NEW: Three-dot dropdown panel (only visible on mobile portrait) -->
+        <div class="menu-panel" id="threeDotPanel" role="dialog" aria-hidden="true">
+          <h4>⚙️ Options</h4>
+          <button class="control-btn" id="threeDotSpeed" title="Playback Speed">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="#fff">
+              <path d="M10 8v8l6-4-6-4zm11-5H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z" />
+              <path d="M17.5 10.5c-.4 0-.8.3-.8.8v1.4c0 .4.4.8.8.8.4 0 .8-.4.8-.8v-1.4c0-.5-.4-.8-.8-.8zm-2.2-1.2c-.3.3-.3.8 0 1.1l1 1c.3.3.8.3 1.1 0 .3-.3.3-.8 0-1.1l-1-1c-.3-.3-.8-.3-1.1 0z" />
+            </svg>
+            <span>Playback Speed</span>
+          </button>
+          <button class="control-btn" id="threeDotQuality" title="Quality">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="#fff">
+              <path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z" />
+              <path d="M8 15h2v-2H8v2zm0-3h2V9H8v3zm3 3h2v-5h-2v5zm3 0h2v-3h-2v3zm0-4h2V9h-2v2z" />
+            </svg>
+            <span>Quality</span>
+          </button>
+          <button class="control-btn" id="threeDotAudio" title="Audio Track">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="#fff">
+              <path d="M12 3v9.28c-.47-.17-.97-.28-1.5-.28C8.01 12 6 14.01 6 16.5S8.01 21 10.5 21c2.31 0 4.2-1.75 4.45-4H15V6h4V3h-7z" />
+            </svg>
+            <span>Audio Track</span>
+          </button>
+          <button class="control-btn" id="threeDotCaption" title="Captions">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="#fff">
+              <path d="M19 4H5c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 7H9.5v-.5h-2v3h2V13H11v1c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1zm7 0h-1.5v-.5h-2v3h2V13H18v1c0 .55-.45 1-1 1h-3c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1z" />
+            </svg>
+            <span>Subtitles</span>
+          </button>
+        </div>
+
         <!-- Controls -->
         <div class="controls" id="controls">
           <input type="range" id="seek" class="seek" min="0" max="100" value="0" step="0.1" aria-label="Seek" />
           <div class="controls-row">
             <div style="display:flex;gap:10px;align-items:center;flex:1">
               <div class="control-btn" id="playPauseBtn" title="Play / Pause">
-                <svg id="playIcon" viewBox="0 0 24 24"><path d="M5 3v18l15-9L5 3z"/></svg>
+                <svg id="playIcon" viewBox="0 0 24 24"><path d="M5 3v18l15-9L5 3z" /></svg>
                 <svg id="pauseIcon" viewBox="0 0 24 24" style="display:none">
-                  <path d="M6 19h4V5H6v14zM14 5v14h4V5h-4z"/>
+                  <path d="M6 19h4V5H6v14zM14 5v14h4V5h-4z" />
                 </svg>
               </div>
 
               <div class="control-btn" id="skipBackBtn" title="Skip -10s">
                 <svg viewBox="0 0 24 24" width="20" height="20">
-                  <path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/>
+                  <path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z" />
                 </svg>
               </div>
 
               <div class="control-btn" id="skipForwardBtn" title="Skip +10s">
                 <svg viewBox="0 0 24 24" width="20" height="20">
-                  <path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/>
+                  <path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z" />
                 </svg>
               </div>
 
               <div class="time" id="timeDisplay">0:00 / 0:00</div>
 
               <div class="control-btn" id="muteBtn" title="Mute / Unmute">
-                <svg id="volIcon" viewBox="0 0 24 24">
-                  <path d="M3 10v4h4l5 5V5L7 10H3z"/>
-                </svg>
+                <svg id="volIcon" viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3z" /></svg>
               </div>
 
               <input type="range" id="volume" class="volume-range" min="0" max="1" step="0.05" value="1" aria-label="Volume" />
@@ -1248,35 +1437,44 @@
             <div style="display:flex;gap:10px;align-items:center">
               <div class="speed-display" id="speedDisplay" title="Click to change speed">1x</div>
               
+              <!-- NEW: Three-dot menu button (only visible on mobile portrait) -->
+              <button class="three-dot-menu-btn" id="threeDotMenuBtn" title="More Options">
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                  <circle cx="12" cy="5" r="2" />
+                  <circle cx="12" cy="12" r="2" />
+                  <circle cx="12" cy="19" r="2" />
+                </svg>
+              </button>
+
               <button class="control-btn" id="speedBtn" title="Playback Speed">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="#fff">
-                  <path d="M10 8v8l6-4-6-4zm11-5H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/>
-                  <path d="M17.5 10.5c-.4 0-.8.3-.8.8v1.4c0 .4.4.8.8.8.4 0 .8-.4.8-.8v-1.4c0-.5-.4-.8-.8-.8zm-2.2-1.2c-.3.3-.3.8 0 1.1l1 1c.3.3.8.3 1.1 0 .3-.3.3-.8 0-1.1l-1-1c-.3-.3-.8-.3-1.1 0z"/>
+                  <path d="M10 8v8l6-4-6-4zm11-5H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z" />
+                  <path d="M17.5 10.5c-.4 0-.8.3-.8.8v1.4c0 .4.4.8.8.8.4 0 .8-.4.8-.8v-1.4c0-.5-.4-.8-.8-.8zm-2.2-1.2c-.3.3-.3.8 0 1.1l1 1c.3.3.8.3 1.1 0 .3-.3.3-.8 0-1.1l-1-1c-.3-.3-.8-.3-1.1 0z" />
                 </svg>
               </button>
               
               <button class="control-btn" id="qualityBtn" title="Quality">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="#fff">
-                  <path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z"/>
-                  <path d="M8 15h2v-2H8v2zm0-3h2V9H8v3zm3 3h2v-5h-2v5zm3 0h2v-3h-2v3zm0-4h2V9h-2v2z"/>
+                  <path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z" />
+                  <path d="M8 15h2v-2H8v2zm0-3h2V9H8v3zm3 3h2v-5h-2v5zm3 0h2v-3h-2v3zm0-4h2V9h-2v2z" />
                 </svg>
               </button>
               
               <button class="control-btn" id="audioTrackBtn" title="Audio Track">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="#fff">
-                  <path d="M12 3v9.28c-.47-.17-.97-.28-1.5-.28C8.01 12 6 14.01 6 16.5S8.01 21 10.5 21c2.31 0 4.2-1.75 4.45-4H15V6h4V3h-7z"/>
+                  <path d="M12 3v9.28c-.47-.17-.97-.28-1.5-.28C8.01 12 6 14.01 6 16.5S8.01 21 10.5 21c2.31 0 4.2-1.75 4.45-4H15V6h4V3h-7z" />
                 </svg>
               </button>
               
               <button class="control-btn" id="captionBtn" title="Captions">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="#fff">
-                  <path d="M19 4H5c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 7H9.5v-.5h-2v3h2V13H11v1c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1zm7 0h-1.5v-.5h-2v3h2V13H18v1c0 .55-.45 1-1 1h-3c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1z"/>
+                  <path d="M19 4H5c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 7H9.5v-.5h-2v3h2V13H11v1c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1zm7 0h-1.5v-.5h-2v3h2V13H18v1c0 .55-.45 1-1 1h-3c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1z" />
                 </svg>
               </button>
               
               <button class="control-btn" id="fullscreenBtn" title="Fullscreen">
                 <svg viewBox="0 0 24 24">
-                  <path d="M7 14H5v5h5v-2H7v-3zM19 5h-5v2h3v3h2V5zM7 5h5V3H5v5h2V5zM14 19v-2h3v-3h2v5h-5z"/>
+                  <path d="M7 14H5v5h5v-2H7v-3zM19 5h-5v2h3v3h2V5zM7 5h5V3H5v5h2V5zM14 19v-2h3v-3h2v5h-5z" />
                 </svg>
               </button>
             </div>
@@ -1288,81 +1486,82 @@
 
   <script>
   (function() {
+    'use strict';
+
     // Elements
     const home = document.getElementById('home');
     const playerScreen = document.getElementById('playerScreen');
+    const playerWrap = document.getElementById('playerWrap');
     const player = document.getElementById('player');
     const ytPlayer = document.getElementById('ytPlayer');
-    const backToHome = document.getElementById('backToHome');
     const inputUrl = document.getElementById('inputUrl');
     const clearBtn = document.getElementById('clearBtn');
     const playLinkBtn = document.getElementById('playLinkBtn');
     const filePicker = document.getElementById('filePicker');
     const loader = document.getElementById('loader');
-    const overlayPlayBtn = document.getElementById('overlayPlayBtn');
-    const centerOverlay = document.getElementById('centerOverlay');
     const errorBox = document.getElementById('errorBox');
     const playPauseBtn = document.getElementById('playPauseBtn');
     const playIcon = document.getElementById('playIcon');
     const pauseIcon = document.getElementById('pauseIcon');
-    const timeDisplay = document.getElementById('timeDisplay');
+    const skipBackBtn = document.getElementById('skipBackBtn');
+    const skipForwardBtn = document.getElementById('skipForwardBtn');
     const seek = document.getElementById('seek');
+    const timeDisplay = document.getElementById('timeDisplay');
     const muteBtn = document.getElementById('muteBtn');
     const volIcon = document.getElementById('volIcon');
     const volume = document.getElementById('volume');
     const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const backToHome = document.getElementById('backToHome');
     const videoTitle = document.getElementById('videoTitle');
-    const controls = document.getElementById('controls');
-    const menuPanel = document.getElementById('menuPanel');
-    const qualitySelect = document.getElementById('qualitySelect');
-    const subtitleSelect = document.getElementById('subtitleSelect');
-    const autoplayToggle = document.getElementById('autoplayToggle');
-    const applySettings = document.getElementById('applySettings');
-    const closeMenu = document.getElementById('closeMenu');
+    const centerOverlay = document.getElementById('centerOverlay');
+    const overlayPlayBtn = document.getElementById('overlayPlayBtn');
+    const pipBtn = document.getElementById('pipBtn');
     const downloadBtn = document.getElementById('downloadBtn');
     const shareBtn = document.getElementById('shareBtn');
-    const skipBackBtn = document.getElementById('skipBackBtn');
-    const skipForwardBtn = document.getElementById('skipForwardBtn');
-    const speedDisplay = document.getElementById('speedDisplay');
+    const menuPanel = document.getElementById('menuPanel');
+    const closeMenu = document.getElementById('closeMenu');
+    const applySettings = document.getElementById('applySettings');
+    const qualitySelect = document.getElementById('qualitySelect');
     const speedSelect = document.getElementById('speedSelect');
-    const pipBtn = document.getElementById('pipBtn');
-    const playerWrap = document.getElementById('playerWrap');
-
-    // New control panel elements
-    const speedBtn = document.getElementById('speedBtn');
-    const qualityBtn = document.getElementById('qualityBtn');
-    const audioTrackBtn = document.getElementById('audioTrackBtn');
-    const captionBtn = document.getElementById('captionBtn');
-    
-    const speedPanel = document.getElementById('speedPanel');
-    const qualityPanel = document.getElementById('qualityPanel');
-    const audioPanel = document.getElementById('audioPanel');
-    const captionPanel = document.getElementById('captionPanel');
-
-    // Double tap elements
+    const subtitleSelect = document.getElementById('subtitleSelect');
+    const speedDisplay = document.getElementById('speedDisplay');
     const tapZoneLeft = document.getElementById('tapZoneLeft');
     const tapZoneRight = document.getElementById('tapZoneRight');
     const tapFeedbackLeft = document.getElementById('tapFeedbackLeft');
     const tapFeedbackRight = document.getElementById('tapFeedbackRight');
 
+    // NEW: Three-dot menu elements
+    const threeDotMenuBtn = document.getElementById('threeDotMenuBtn');
+    const threeDotPanel = document.getElementById('threeDotPanel');
+    const threeDotSpeed = document.getElementById('threeDotSpeed');
+    const threeDotQuality = document.getElementById('threeDotQuality');
+    const threeDotAudio = document.getElementById('threeDotAudio');
+    const threeDotCaption = document.getElementById('threeDotCaption');
+
+    // Panel elements
+    const speedPanel = document.getElementById('speedPanel');
+    const qualityPanel = document.getElementById('qualityPanel');
+    const audioPanel = document.getElementById('audioPanel');
+    const captionPanel = document.getElementById('captionPanel');
+    const speedBtn = document.getElementById('speedBtn');
+    const qualityBtn = document.getElementById('qualityBtn');
+    const audioTrackBtn = document.getElementById('audioTrackBtn');
+    const captionBtn = document.getElementById('captionBtn');
+
     // State
     let hls = null;
     let shakaPlayer = null;
     let activeSource = null;
+    let isYouTubeMode = false;
+    let currentSpeed = 1;
     let hideControlsTimer = null;
     let errorTimeout = null;
-    let currentSpeed = 1;
-    let isYouTubeMode = false;
     let lastTapTime = 0;
     let tapTimer = null;
 
-    // Clear button functionality
+    // Clear Button Functionality
     inputUrl.addEventListener('input', () => {
-      if (inputUrl.value.trim()) {
-        clearBtn.classList.add('show');
-      } else {
-        clearBtn.classList.remove('show');
-      }
+      clearBtn.classList.toggle('show', inputUrl.value.trim().length > 0);
     });
 
     clearBtn.addEventListener('click', (e) => {
@@ -1372,31 +1571,24 @@
       inputUrl.focus();
     });
 
-    // Double tap functionality
-    function handleDoubleTap(zone) {
-      const currentTime = new Date().getTime();
-      const tapLength = currentTime - lastTapTime;
-
-      if (tapLength < 300 && tapLength > 0) {
-        // Double tap detected
+    // Double Tap Logic
+    function handleDoubleTap(side) {
+      const now = Date.now();
+      const timeDiff = now - lastTapTime;
+      
+      if (timeDiff < 300) {
         clearTimeout(tapTimer);
-        
-        if (zone === 'left') {
-          // Skip backward 10 seconds
+        if (side === 'left') {
           player.currentTime = Math.max(0, player.currentTime - 10);
           showTapFeedback(tapFeedbackLeft);
         } else {
-          // Skip forward 10 seconds
           player.currentTime = Math.min(player.duration || Infinity, player.currentTime + 10);
           showTapFeedback(tapFeedbackRight);
         }
-        
         lastTapTime = 0;
       } else {
-        // Single tap - wait for potential second tap
-        lastTapTime = currentTime;
+        lastTapTime = now;
         tapTimer = setTimeout(() => {
-          // Single tap action (show/hide controls)
           showControlsTemporarily();
           lastTapTime = 0;
         }, 300);
@@ -1659,29 +1851,28 @@
           // OPTIMIZED HLS.js configuration for better buffering
           hls = new Hls({
             enableWorker: true,
-            lowLatencyMode: false, // Changed for better buffering
-            maxBufferLength: 60, // Increased from 20 to 60 seconds
-            maxMaxBufferLength: 120, // Increased from 40 to 120 seconds
-            maxBufferSize: 120 * 1000 * 1000, // Increased to 120MB
-            maxBufferHole: 0.5, // Increased tolerance
-            manifestLoadingTimeOut: 15000, // Increased timeout
+            lowLatencyMode: false,
+            maxBufferLength: 60,
+            maxMaxBufferLength: 120,
+            maxBufferSize: 120 * 1000 * 1000,
+            maxBufferHole: 0.5,
+            manifestLoadingTimeOut: 15000,
             manifestLoadingMaxRetry: 6,
             levelLoadingTimeOut: 15000,
             levelLoadingMaxRetry: 6,
-            fragLoadingTimeOut: 20000, // Increased timeout
-            fragLoadingMaxRetry: 8, // More retries
+            fragLoadingTimeOut: 20000,
+            fragLoadingMaxRetry: 8,
             startLevel: -1,
             autoStartLoad: true,
             startPosition: -1,
             capLevelToPlayerSize: true,
-            abrEwmaDefaultEstimate: 1000000, // Higher estimate
-            abrBandWidthFactor: 0.90, // Adjusted for better quality
+            abrEwmaDefaultEstimate: 1000000,
+            abrBandWidthFactor: 0.90,
             abrBandWidthUpFactor: 0.7,
             debug: false,
-            // Additional optimizations
             maxLoadingDelay: 4,
             maxBufferTime: 60,
-            backBufferLength: 30 // Keep 30s behind current position
+            backBufferLength: 30
           });
           hls.attachMedia(player);
           hls.on(Hls.Events.MEDIA_ATTACHED, () => hls.loadSource(src));
@@ -1707,11 +1898,11 @@
           shakaPlayer = new shaka.Player(player);
           shakaPlayer.configure({
             streaming: {
-              bufferingGoal: 60, // Increased from 20 to 60 seconds
-              rebufferingGoal: 20, // Increased from 10 to 20 seconds
-              bufferBehind: 30, // Keep more behind
+              bufferingGoal: 60,
+              rebufferingGoal: 20,
+              bufferBehind: 30,
               retryParameters: {
-                timeout: 20000, // Increased timeout
+                timeout: 20000,
                 maxAttempts: 8,
                 baseDelay: 1000,
                 backoffFactor: 2,
@@ -1721,7 +1912,6 @@
               smallGapLimit: 0.5,
               jumpLargeGaps: true,
               alwaysStreamText: true,
-              // Additional optimizations
               segmentPrefetchLimit: 3,
               prefetchAudioLanguages: true
             },
@@ -1737,7 +1927,7 @@
             },
             abr: {
               enabled: true,
-              defaultBandwidthEstimate: 1000000, // Higher estimate
+              defaultBandwidthEstimate: 1000000,
               switchInterval: 3,
               bandwidthUpgradeTarget: 0.85,
               bandwidthDowngradeTarget: 0.90
@@ -1757,7 +1947,7 @@
         }
 
         // Native - preload changed to "auto" for faster loading
-        player.preload = 'auto'; // Changed from 'metadata'
+        player.preload = 'auto';
         player.src = src;
         player.load();
         player.addEventListener('loadedmetadata', () => {
@@ -2280,11 +2470,63 @@
     
     // Close all panels function
     function closeAllPanels() {
-      [menuPanel, speedPanel, qualityPanel, audioPanel, captionPanel].forEach(panel => {
+      [menuPanel, speedPanel, qualityPanel, audioPanel, captionPanel, threeDotPanel].forEach(panel => {
         if (panel) {
           panel.style.display = 'none';
           panel.setAttribute('aria-hidden', 'true');
         }
+      });
+    }
+
+    // ========== THREE-DOT MENU FUNCTIONALITY (MOBILE PORTRAIT) ==========
+    
+    // Three-dot menu button handler
+    if (threeDotMenuBtn) {
+      threeDotMenuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = threeDotPanel.style.display === 'block';
+        closeAllPanels();
+        if (!isOpen) {
+          threeDotPanel.style.display = 'block';
+          threeDotPanel.setAttribute('aria-hidden', 'false');
+        }
+      });
+    }
+
+    // Three-dot menu options handlers
+    if (threeDotSpeed) {
+      threeDotSpeed.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeAllPanels();
+        speedPanel.style.display = 'block';
+        speedPanel.setAttribute('aria-hidden', 'false');
+      });
+    }
+
+    if (threeDotQuality) {
+      threeDotQuality.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeAllPanels();
+        qualityPanel.style.display = 'block';
+        qualityPanel.setAttribute('aria-hidden', 'false');
+      });
+    }
+
+    if (threeDotAudio) {
+      threeDotAudio.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeAllPanels();
+        audioPanel.style.display = 'block';
+        audioPanel.setAttribute('aria-hidden', 'false');
+      });
+    }
+
+    if (threeDotCaption) {
+      threeDotCaption.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeAllPanels();
+        captionPanel.style.display = 'block';
+        captionPanel.setAttribute('aria-hidden', 'false');
       });
     }
 
@@ -2522,6 +2764,7 @@
       if (!e.target.closest('.menu-panel') && 
           !e.target.closest('.control-btn') &&
           !e.target.closest('.icon-btn') &&
+          !e.target.closest('.three-dot-menu-btn') &&
           !e.target.closest('.gear')) {
         closeAllPanels();
       }
