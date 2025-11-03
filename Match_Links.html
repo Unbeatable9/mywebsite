@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match Links - Navigation Hub</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+            background: hsl(240, 10%, 5%);
+            color: hsl(200, 80%, 85%);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Custom animations */
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes glow-pulse {
+            0%, 100% {
+                box-shadow: 0 0 20px hsla(265, 75%, 60%, 0.3),
+                            0 0 40px hsla(265, 75%, 60%, 0.2),
+                            0 0 60px hsla(265, 75%, 60%, 0.1);
+            }
+            50% {
+                box-shadow: 0 0 30px hsla(200, 80%, 70%, 0.4),
+                            0 0 60px hsla(200, 80%, 70%, 0.3),
+                            0 0 90px hsla(200, 80%, 70%, 0.2);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-gradient {
+            background-size: 200% 200%;
+            animation: gradient-shift 8s ease infinite;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, hsl(265, 75%, 60%), hsl(200, 80%, 70%));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .btn-container {
+            animation: fadeIn 0.6s ease-out forwards;
+            opacity: 0;
+        }
+
+        .btn-container:nth-child(1) { animation-delay: 0.1s; }
+        .btn-container:nth-child(2) { animation-delay: 0.2s; }
+        .btn-container:nth-child(3) { animation-delay: 0.3s; }
+        .btn-container:nth-child(4) { animation-delay: 0.4s; }
+        .btn-container:nth-child(5) { animation-delay: 0.5s; }
+        .btn-container:nth-child(6) { animation-delay: 0.6s; }
+
+        .button {
+            position: relative;
+            width: 100%;
+            padding: 1.5rem 2rem;
+            background: hsla(240, 10%, 8%, 0.5);
+            backdrop-filter: blur(12px);
+            border: 1px solid hsl(260, 30%, 20%);
+            border-radius: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .button:hover {
+            transform: scale(1.02);
+            border-color: hsla(265, 75%, 60%, 0.5);
+            box-shadow: 0 20px 60px -15px hsla(265, 75%, 60%, 0.5);
+        }
+
+        .glow-effect {
+            position: absolute;
+            inset: -4px;
+            border-radius: 1rem;
+            background: linear-gradient(135deg, hsl(265, 75%, 60%), hsl(200, 80%, 70%));
+            opacity: 0;
+            filter: blur(20px);
+            transition: opacity 0.5s;
+            z-index: -1;
+            animation: gradient-shift 8s ease infinite;
+            background-size: 200% 200%;
+        }
+
+        .button:hover .glow-effect {
+            opacity: 0.75;
+        }
+
+        .shine-effect {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, hsla(200, 80%, 70%, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 1s;
+        }
+
+        .button:hover .shine-effect {
+            transform: translateX(100%);
+        }
+
+        .icon-box {
+            width: 3rem;
+            height: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.75rem;
+            background: linear-gradient(135deg, hsl(265, 75%, 60%), hsl(200, 80%, 70%));
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .button:hover .icon-box {
+            transform: scale(1.1) rotate(3deg);
+        }
+
+        .button:hover .button-label {
+            color: hsl(200, 80%, 75%);
+        }
+
+        .button:hover .arrow {
+            transform: translateX(4px);
+            color: hsl(200, 80%, 75%);
+        }
+
+        .arrow {
+            transition: all 0.3s;
+            color: hsl(240, 5%, 60%);
+            flex-shrink: 0;
+        }
+
+        #particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.6;
+            z-index: 0;
+        }
+
+        .gradient-overlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, hsla(265, 75%, 60%, 0.2), transparent, hsla(200, 80%, 70%, 0.1));
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glow-orb-1 {
+            position: fixed;
+            left: 25%;
+            top: 25%;
+            width: 24rem;
+            height: 24rem;
+            border-radius: 50%;
+            background: hsla(265, 75%, 60%, 0.3);
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glow-orb-2 {
+            position: fixed;
+            right: 25%;
+            bottom: 25%;
+            width: 24rem;
+            height: 24rem;
+            border-radius: 50%;
+            background: hsla(200, 80%, 70%, 0.2);
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .content {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 1rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 42rem;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 3.75rem;
+            font-weight: 700;
+            margin-bottom: 3rem;
+        }
+
+        .buttons-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .button-content {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .button-text-wrapper {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .button-label {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: hsl(200, 80%, 85%);
+            transition: color 0.3s;
+            line-height: 1.2;
+        }
+
+        .button-description {
+            font-size: 0.875rem;
+            color: hsl(240, 5%, 60%);
+            margin-top: 0.25rem;
+            line-height: 1.3;
+        }
+
+        @media (max-width: 640px) {
+            .title {
+                font-size: 2.5rem;
+            }
+            .button {
+                padding: 1.25rem 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Effects -->
+    <div class="gradient-overlay"></div>
+    <div class="glow-orb-1"></div>
+    <div class="glow-orb-2"></div>
+    <canvas id="particleCanvas"></canvas>
+
+    <!-- Main Content -->
+    <div class="content">
+        <div class="container">
+            <!-- Title -->
+            <h1 class="title gradient-text animate-gradient">Match Links</h1>
+
+            <!-- Buttons -->
+            <div class="buttons-list">
+                <!-- Button 1 -->
+                <div class="btn-container">
+                    <button class="button" onclick="openLink('https://unbeatable9.github.io/mywebsite/LiveCricket.html')">
+                        <div class="glow-effect"></div>
+                        <div class="shine-effect"></div>
+                        <div class="button-content">
+                            <div class="icon-box">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                                </svg>
+                            </div>
+                            <div class="button-text-wrapper">
+                                <div class="button-label">Star Sports Hindi 1</div>
+                                <div class="button-description">All Quality</div>
+                            </div>
+                        </div>
+                        <svg class="arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Button 2 -->
+                <div class="btn-container">
+                    <button class="button" onclick="openLink('https://github.com')">
+                        <div class="glow-effect"></div>
+                        <div class="shine-effect"></div>
+                        <div class="button-content">
+                            <div class="icon-box">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                                </svg>
+                            </div>
+                            <div class="button-text-wrapper">
+                                <div class="button-label">GitHub Profile</div>
+                                <div class="button-description">Check out my code repositories</div>
+                            </div>
+                        </div>
+                        <svg class="arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Button 3 -->
+                <div class="btn-container">
+                    <button class="button" onclick="openLink('https://linkedin.com')">
+                        <div class="glow-effect"></div>
+                        <div class="shine-effect"></div>
+                        <div class="button-content">
+                            <div class="icon-box">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                                </svg>
+                            </div>
+                            <div class="button-text-wrapper">
+                                <div class="button-label">LinkedIn</div>
+                                <div class="button-description">Connect with me professionally</div>
+                            </div>
+                        </div>
+                        <svg class="arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Button 4 -->
+                <div class="btn-container">
+                    <button class="button" onclick="openLink('https://youtube.com')">
+                        <div class="glow-effect"></div>
+                        <div class="shine-effect"></div>
+                        <div class="button-content">
+                            <div class="icon-box">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                                </svg>
+                            </div>
+                            <div class="button-text-wrapper">
+                                <div class="button-label">YouTube Channel</div>
+                                <div class="button-description">Watch my video content</div>
+                            </div>
+                        </div>
+                        <svg class="arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Button 5 -->
+                <div class="btn-container">
+                    <button class="button" onclick="openLink('mailto:your.email@example.com')">
+                        <div class="glow-effect"></div>
+                        <div class="shine-effect"></div>
+                        <div class="button-content">
+                            <div class="icon-box">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                                </svg>
+                            </div>
+                            <div class="button-text-wrapper">
+                                <div class="button-label">Contact Me</div>
+                                <div class="button-description">Send me an email</div>
+                            </div>
+                        </div>
+                        <svg class="arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Button 6 -->
+                <div class="btn-container">
+                    <button class="button" onclick="openLink('https://portfolio.example.com')">
+                        <div class="glow-effect"></div>
+                        <div class="shine-effect"></div>
+                        <div class="button-content">
+                            <div class="icon-box">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                                </svg>
+                            </div>
+                            <div class="button-text-wrapper">
+                                <div class="button-label">Portfolio</div>
+                                <div class="button-description">View my work samples</div>
+                            </div>
+                        </div>
+                        <svg class="arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Open links in new tab
+        function openLink(url) {
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+
+        // Particle Animation
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 1;
+                this.speedX = Math.random() * 1 - 0.5;
+                this.speedY = Math.random() * 1 - 0.5;
+                this.opacity = Math.random() * 0.5 + 0.2;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if (this.x > canvas.width) this.x = 0;
+                if (this.x < 0) this.x = canvas.width;
+                if (this.y > canvas.height) this.y = 0;
+                if (this.y < 0) this.y = canvas.height;
+            }
+
+            draw() {
+                ctx.fillStyle = `hsla(200, 80%, 70%, ${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        const particles = [];
+        const particleCount = 50;
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // Resize canvas on window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
