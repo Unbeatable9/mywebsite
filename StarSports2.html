@@ -1,0 +1,157 @@
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Star Sports</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" crossorigin="anonymous">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      background: #000;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .shaka-video-container {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      object-fit: contain;
+    }
+    .shaka-spinner-container,
+    .shaka-spinner,
+    .shaka-spinner-svg {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+    }
+
+    .hidden-counter { display: none !important; }
+  </style>
+</head>
+
+<body>
+
+  <div class="hidden-counter">
+    <div id="sfcs1uwt1l1mmuruy1pz2sj1skw51ynnqg3">
+      <a href="https://www.freecounterstat.com/geozoom.php?c=s1uwt1l1mmuruy1pz2sj1skw51ynnqg3&amp;base=counter1&amp;type_clic=1" target="_blank">
+        <img border="0" src="https://counter1.freecounterstat.com/private/counter.php?c=s1uwt1l1mmuruy1pz2sj1skw51ynnqg3&amp;init=1761838234091&amp;init_freecounterstat=0&amp;library=library_counters&amp;coef=1&amp;type=195&amp;lenght=9&amp;pv=0" alt="Click to see detail of visits and stats for this site" title="Click to see detail of visits and stats for this site">
+      </a>
+      <img style="border:none" src="https://counter1.optistats.ovh:4433/private/pointeur/pointeur.gif?|s1uwt1l1mmuruy1pz2sj1skw51ynnqg3|864*1536|en|24|1761838234|36d54268e2d5727e199c7881b6da1353|computer|windows|10|chrome|142|India|IN|26.87560|80.91150|Lucknow|Jio|21600|0|1761838232|ok|https%3A//cricketstan.github.io/Channel-13/||js|152.58.184.79|||&amp;init=1761838234091" border="0" width="1" height="1">
+    </div>
+    <script type="text/javascript" src="https://counter1.optistats.ovh/private/counter.js?c=s1uwt1l1mmuruy1pz2sj1skw51ynnqg3&amp;down=async" async=""></script>
+  </div>
+
+  <div class="shaka-video-container" data-shaka-player="" data-shaka-player-container="" shaka-controls="true">
+    <video autoplay playsinline preload="metadata" poster="" class="shaka-video"></video>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+
+      /********** Shaka Player setup **********/
+      shaka.polyfill.installAll();
+
+      if (!shaka.Player.isBrowserSupported()) {
+        console.error('Browser not supported');
+        return;
+      }
+
+      const video = document.querySelector('video');
+      const player = new shaka.Player();
+      await player.attach(video);
+
+      const container = document.querySelector('.shaka-video-container');
+      const ui = new shaka.ui.Overlay(player, container, video);
+
+      ui.configure({
+        controlPanelElements: [
+          'play_pause', 'time_and_duration', 'mute', 'volume',
+          'spacer', 'language', 'captions', 'picture_in_picture',
+          'quality', 'fullscreen'
+        ],
+        volumeBarColors: {
+          base: 'rgba(255, 0, 0, 0.6)',
+          level: 'rgb(255, 0, 0)'
+        },
+        seekBarColors: {
+          base: 'rgba(255, 165, 0, 0.4)',
+          buffered: 'rgba(255, 140, 0, 0.6)',
+          played: 'rgb(255, 69, 0)'
+        }
+      });
+
+      /********** Fetch Token from alex8875 **********/
+      let cookieHeader = "";
+      try {
+        const response = await fetch("https://raw.githubusercontent.com/alex8875/m3u/refs/heads/main/jtv.m3u");
+        const m3uText = await response.text();
+        const match = m3uText.match(/"cookie":"([^"]+)"/);
+        if (match && match[1]) {
+          cookieHeader = match[1];
+          console.log("Cookie Token fetched:", cookieHeader);
+        } else {
+          console.warn("No cookie found in M3U file");
+        }
+      } catch (err) {
+        console.error("Failed to fetch token:", err);
+      }
+
+      const drmConfig = {
+        clearKeys: {
+          "b9d4acedc66c5660a1e06197a55bccd2": "dd53bab1a42f41ae8f0a5c8fd286f456"
+        }
+      };
+
+      const streamUrl = "https://jiotvpllive.cdn.jio.com/bpk-tv/Sports18_1_HD_BTS/output/index.mpd";
+
+      player.configure({
+        drm: drmConfig,
+        streaming: {
+          lowLatencyMode: true,
+          bufferingGoal: 15,
+          rebufferingGoal: 2,
+          bufferBehind: 15,
+          retryParameters: { timeout: 10000, maxAttempts: 5, baseDelay: 300, backoffFactor: 1.2 },
+          segmentRequestTimeout: 8000,
+          segmentPrefetchLimit: 2
+        },
+        manifest: { retryParameters: { timeout: 8000, maxAttempts: 3 } }
+      });
+
+      player.getNetworkingEngine().registerRequestFilter((type, request) => {
+        request.headers["Referer"] = "https://www.jiotv.com/";
+        request.headers["User-Agent"] = "plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6";
+        if (cookieHeader) request.headers["Cookie"] = cookieHeader;
+
+        if (
+          (type === shaka.net.NetworkingEngine.RequestType.MANIFEST ||
+           type === shaka.net.NetworkingEngine.RequestType.SEGMENT) &&
+          request.uris[0] && cookieHeader && !request.uris[0].includes("__hdnea__=")
+        ) {
+          const sep = request.uris[0].includes("?") ? "&" : "?";
+          request.uris[0] += sep + cookieHeader;
+        }
+      });
+
+      try {
+        await player.load(streamUrl);
+        console.log("Stream loaded successfully");
+      } catch (error) {
+        console.error("Load error:", error);
+      }
+    });
+  </script>
+
+</body>
+</html>
